@@ -10,3 +10,4 @@ class Object:
     def __init__(self, parent, x:int, y:int):
         self.parent = parent
         self.pos = np.array([x, y])
+        self.old_pos = self.pos # Variable containing the object's last position

@@ -1,4 +1,5 @@
 from environment import Environment
+import numpy as np
 import pygame
 import random
 
@@ -6,22 +7,25 @@ BLACK = (0,0,0)
 WHITE = (255,255,255)
 RED = (255, 0,0)
 
-MAX_RES_HORIZ = 2200
-MAX_RES_VERT = 1440
+MAX_RES_HORIZ = 2560
+MAX_RES_VERT = 1200
 
-WIDTH = 250
-HEIGHT = 250
+WIDTH = 1250
+HEIGHT = 600
 BLOCK_SIZE = 5
+
+NUM_AGENTS = 2000
+TICK_DELAY = 100
 
 too_wide = BLOCK_SIZE * WIDTH > MAX_RES_HORIZ
 too_tall = BLOCK_SIZE * HEIGHT > MAX_RES_VERT
 
-while (too_wide or too_tall) and BLOCK_SIZE > 1:
+while (too_wide or too_tall) and BLOCK_SIZE > 2:
     BLOCK_SIZE -= 1
     too_wide = BLOCK_SIZE * WIDTH > MAX_RES_HORIZ
     too_tall = BLOCK_SIZE * HEIGHT > MAX_RES_VERT
 
-TICK_DELAY = 200
+
 
 def main():
     
@@ -33,7 +37,7 @@ def main():
     draw_grid(screen, HEIGHT, WIDTH, BLOCK_SIZE)
     
     env = Environment(WIDTH, HEIGHT)
-    for i in range(6):
+    for i in range(NUM_AGENTS):
         x = random.randint(0, WIDTH-1)
         y = random.randint(0, HEIGHT-1)
         env.add_agent(x, y)
@@ -56,7 +60,10 @@ def main():
 
         # Update the display
         # Wipe the grid clean
-        draw_grid(screen, HEIGHT, WIDTH, BLOCK_SIZE)
+        for a in env.agents:
+            if not np.array_equal(a.pos, a.old_pos):
+                x, y = a.old_pos.tolist()
+                draw_square(screen, x, y, BLOCK_SIZE, WHITE)
         # Draw agents
         for a in env.agents:
             x, y = a.pos.tolist()
