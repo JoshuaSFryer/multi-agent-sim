@@ -41,6 +41,7 @@ class Environment:
     def move_object(self, obj, new_x, new_y):
         x, y = obj.pos.tolist()
         self.cells[y][x].remove_object(obj)
+        obj.old_pos = np.array([x, y])
         obj.pos = np.array([new_x, new_y])
         self.cells[new_y][new_x].add_object(obj)
     
