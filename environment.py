@@ -30,19 +30,19 @@ class Environment:
         self.agents.append(new_agent)
 
     def add_object(self, obj, x, y):
-        self.cells[x][y].add_object(obj)
+        self.cells[y][x].add_object(obj)
         obj.pos = np.array([x, y])
 
     def remove_object(self, obj):
         x, y = obj.pos.tolist()
-        self.cells[x][y].remove_object(obj)
+        self.cells[y][x].remove_object(obj)
         self.agents.remove(obj)
 
     def move_object(self, obj, new_x, new_y):
         x, y = obj.pos.tolist()
-        self.cells[x][y].remove_object(obj)
+        self.cells[y][x].remove_object(obj)
         obj.pos = np.array([new_x, new_y])
-        self.cells[new_x][new_y].add_object(obj)
+        self.cells[new_y][new_x].add_object(obj)
     
     def tick(self):
         """
@@ -54,7 +54,7 @@ class Environment:
             x, y = new_pos.tolist()
             # Check against going out of bounds, only make the move if it is
             # allowed.
-            if not (x >= self.canvas_size_x or y >= self.canvas_size_y):
+            if not (x >= self.canvas_size_x or y >= self.canvas_size_y or x < 0 or y < 0):
                 self.move_object(agent, x, y)
 
 
