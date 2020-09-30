@@ -15,10 +15,10 @@ MAX_RES_VERT = 1200
 WINDOW_RES_HORIZ = 1920
 WINDOW_RES_VERT = 1080
 
-WORLD_WIDTH = 500
-WORLD_HEIGHT = 500
+WORLD_WIDTH = 2
+WORLD_HEIGHT = 2
 
-BLOCK_SIZE = 2
+BLOCK_SIZE = 200
 BLOCK_SIZE_MIN = 1
 # Automatically scale BLOCK_SIZE to try to fit everything within the window
 too_wide = BLOCK_SIZE * WORLD_WIDTH > MAX_RES_HORIZ
@@ -41,8 +41,8 @@ vp_curr_y = 0
 vp_width = 200
 vp_height = 200
 
-NUM_AGENTS = 1000
-TICK_DELAY = 100
+NUM_AGENTS = 3
+TICK_DELAY = 1000
 
 FPS_CLOCK = pygame.time.Clock()
 
@@ -69,10 +69,7 @@ def main():
 
     env = Environment(WORLD_WIDTH, WORLD_HEIGHT)
     for i in range(NUM_AGENTS):
-        x = random.randint(0, WORLD_WIDTH-1)
-        y = random.randint(0, WORLD_HEIGHT-1)
-        env.add_agent(x, y)
-
+        spawn_agent(env)
 
     pygame.display.update()
     
@@ -156,11 +153,16 @@ def draw_view(env):
         #     and y >= vp_start_tile_y and y <= vp_end_tile_y):
         #     draw_square(x, y, RED)
         draw_square(x, y, RED)
-
     pygame.display.update()
 
 
-
+def spawn_agent(env):
+    while True:
+        x = random.randint(0, WORLD_WIDTH-1)
+        y = random.randint(0, WORLD_HEIGHT-1)
+        if not env.cells[y][x].is_occupied():
+            break
+    env.add_agent(x, y)
 
 def zoom_in():
     global BLOCK_SIZE, screen
