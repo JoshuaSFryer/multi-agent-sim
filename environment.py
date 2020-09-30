@@ -8,6 +8,8 @@ from agent import MeanderingAgent
 from cell import Cell
 from objects import *
 
+MAXIMUM_MOVEMENT_ATTEMPTS = 20
+
 class Environment:
 
     def __init__(self, width:int, height:int):
@@ -53,11 +55,28 @@ class Environment:
             move = agent.get_movement()
             new_pos = agent.pos + move # this is why I'm using numpy arrays.
             x, y = new_pos.tolist()
-            # Check against going out of bounds, only make the move if it is
-            # allowed.
-            if not (x >= self.canvas_size_x or y >= self.canvas_size_y or x < 0 or y < 0):
-                self.move_object(agent, x, y)
+            # Generate a move repeatedly until a valid one is found
+            attempts = 0 # Number of times we've tried to find a legal move
+            while True: # I miss do-while loops
+                attempts += 1
+                move = agent.get_movement()
+                new_pos = agent.pos + move
+                x, y = new_pos.tolist()
+                if validate_move(agent, x, y):
+                    break
+                # If we exceed the maximum number of attempts, do not move.
+                if attempts >= MAXIMUM_MOVEMENT_ATTEMPTS:
+                    x, y = [0,0]
+            # Execute the move
+            self.move_object(agent, x, y)
+                    
 
+    def validate_move(self, agent, x, y):
+        if (x >= self.canvas_size_x or y >= self.canvas_size_y 
+            or x < 0 or y < 0):
+            return False
+        if self.cells[y][x].objects: # i.e. there is already something in that square
+            return False
 
-
+        return True
     
