@@ -62,11 +62,12 @@ class Environment:
                 move = agent.get_movement()
                 new_pos = agent.pos + move
                 x, y = new_pos.tolist()
-                if validate_move(agent, x, y):
+                if self.validate_move(agent, x, y):
                     break
                 # If we exceed the maximum number of attempts, do not move.
                 if attempts >= MAXIMUM_MOVEMENT_ATTEMPTS:
                     x, y = [0,0]
+                    break
             # Execute the move
             self.move_object(agent, x, y)
                     
