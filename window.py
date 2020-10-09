@@ -9,14 +9,16 @@ import random
 BLACK = (0,0,0)
 WHITE = (255,255,255)
 RED = (255, 0,0)
+BLUE = (0,0,255)
+GREEN = (0,255,0)
 
 MAX_RES_HORIZ = 2560
 MAX_RES_VERT = 1200
 WINDOW_RES_HORIZ = 1920
 WINDOW_RES_VERT = 1080
 
-WORLD_WIDTH = 2
-WORLD_HEIGHT = 2
+WORLD_WIDTH = 50
+WORLD_HEIGHT = 50
 
 BLOCK_SIZE = 200
 BLOCK_SIZE_MIN = 1
@@ -75,6 +77,7 @@ def main():
     
     TICK_EVENT = pygame.USEREVENT
     pygame.time.set_timer(TICK_EVENT, TICK_DELAY)
+
     running = True
 
     while running:
@@ -146,6 +149,14 @@ def draw_view(env):
 
     clear_screen()
     
+    for p in env.home_points:
+        x, y = p.tolist()
+        draw_square(x, y, GREEN)
+
+    for p in env.work_points:
+        x, y = p.tolist()
+        draw_square(x, y, BLUE)
+
     # Get list of agents and display them all
     for a in env.agents:
         x, y = a.pos.tolist()
@@ -153,6 +164,8 @@ def draw_view(env):
         #     and y >= vp_start_tile_y and y <= vp_end_tile_y):
         #     draw_square(x, y, RED)
         draw_square(x, y, RED)
+
+    
     pygame.display.update()
 
 
@@ -160,9 +173,28 @@ def spawn_agent(env):
     while True:
         x = random.randint(0, WORLD_WIDTH-1)
         y = random.randint(0, WORLD_HEIGHT-1)
-        if not env.cells[y][x].is_occupied():
+        focus_x = random.randint(0, WORLD_WIDTH-1)
+        focus_y = random.randint(0, WORLD_HEIGHT-1)
+        home_point = np.array([x, y])
+        work_point = np.array([focus_x, focus_y])
+        # Make sure that no two agents share the same work point or the 
+        # same home point.
+        valid_home = True
+        valid_work = True
+        for p in env.home_points:
+            if np.array_equal(p, home_point):
+                valid_home = False
+        
+        for p in env.work_points:
+            if np.array_equal(p, work_point):
+                valid_work = False
+
+        if valid_home and valid_work:
             break
-    env.add_agent(x, y)
+
+    env.home_points.append(home_point)
+    env.work_points.append(work_point)
+    env.add_focused_agent(home_point, work_point)
 
 def zoom_in():
     global BLOCK_SIZE, screen
@@ -175,25 +207,25 @@ def zoom_out():
         BLOCK_SIZE -= 1
         # clear_screen()
 
-def pan_view(dx, dy):
-    global vp_curr_x, vp_curr_y, vp_max_x, vp_max_y
-    if vp_curr_x <= vp_max_x and vp_curr_x >= vp_min_x:
-        vp_curr_x = vp_curr_x - dx
-        # Constrain new coordinate within bounds
-        if vp_curr_x > vp_max_x:
-            vp_curr_x = vp_max_x
-        if vp_curr_x < vp_min_x:
-            vp_curr_x = vp_min_x # This will almost always be 0, I think...
+# def pan_view(dx, dy):
+#     global vp_curr_x, vp_curr_y, vp_max_x, vp_max_y
+#     if vp_curr_x <= vp_max_x and vp_curr_x >= vp_min_x:
+#         vp_curr_x = vp_curr_x - dx
+#         # Constrain new coordinate within bounds
+#         if vp_curr_x > vp_max_x:
+#             vp_curr_x = vp_max_x
+#         if vp_curr_x < vp_min_x:
+#             vp_curr_x = vp_min_x # This will almost always be 0, I think...
 
-    if vp_curr_y <= vp_max_y and vp_curr_y >= vp_min_y:
-        vp_curr_y = vp_curr_y - dy
-        # Constrain new coordinate within bounds
-        if vp_curr_y > vp_max_y:
-            vp_curr_y = vp_max_y
-        if vp_curr_y < vp_min_y:
-            vp_curr_y = vp_min_y # This will almost always be 0, I think...
+#     if vp_curr_y <= vp_max_y and vp_curr_y >= vp_min_y:
+#         vp_curr_y = vp_curr_y - dy
+#         # Constrain new coordinate within bounds
+#         if vp_curr_y > vp_max_y:
+#             vp_curr_y = vp_max_y
+#         if vp_curr_y < vp_min_y:
+#             vp_curr_y = vp_min_y # This will almost always be 0, I think...
 
-    print(f"Viewport origin: ({vp_curr_x}, {vp_curr_y})")
+#     print(f"Viewport origin: ({vp_curr_x}, {vp_curr_y})")
 
 
 

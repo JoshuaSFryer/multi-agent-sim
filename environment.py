@@ -4,11 +4,13 @@ agents, walls, etc). When its tick() method is called, it will execute an
 update on the system, where all the agents will execute a movement based on
 their own logic.
 """
-from agent import MeanderingAgent
+from agent import MeanderingAgent, FocusedAgent
 from cell import Cell
 from objects import *
 
 MAXIMUM_MOVEMENT_ATTEMPTS = 20
+
+MINUTES_PER_DAY = 1440
 
 class Environment:
 
@@ -18,6 +20,12 @@ class Environment:
 
         self.cells = list() # 2D list, forming a grid
         self.agents = list()
+        self.home_points = list()
+        self.work_points = list()
+
+        # Current "simulation time", in minutes. One tick advances this clock
+        # by one minute. Wraps around at 1440 minutes (i.e. every 24 hours).
+        self.current_time = 0
 
         # Build and populate a grid of Cells
         for y in range(self.canvas_size_y):
@@ -26,19 +34,31 @@ class Environment:
                 row.append(Cell())
             self.cells.append(row)
 
-    def add_agent(self, x, y):
+
+    def add_meandering_agent(self, x, y):
         new_agent = MeanderingAgent(self, x, y)
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
+
+
+    def add_focused_agent(self, home_point, work_point):
+        # Agent spawns at home
+        x, y = home_point.tolist()
+        new_agent = FocusedAgent(self, x, y, home_point, work_point, 10)
+        self.add_object(new_agent, x, y)
+        self.agents.append(new_agent)
+
 
     def add_object(self, obj, x, y):
         self.cells[y][x].add_object(obj)
         obj.pos = np.array([x, y])
 
+
     def remove_object(self, obj):
         x, y = obj.pos.tolist()
         self.cells[y][x].remove_object(obj)
         self.agents.remove(obj)
+
 
     def move_object(self, obj, new_x, new_y):
         x, y = obj.pos.tolist()
@@ -46,15 +66,22 @@ class Environment:
         obj.old_pos = np.array([x, y])
         obj.pos = np.array([new_x, new_y])
         self.cells[new_y][new_x].add_object(obj)
+
     
     def tick(self):
         """
         Tick the simulation forward one step, allowing Agents to take actions.
         """
+        # Advance clock by one minute
+        self.current_time += 1
+        if self.current_time >= MINUTES_PER_DAY:
+            self.current_time = 0
+        # Upon day/night transition every 1440/2 = 720 steps (720 min = 12 hrs),
+        # have agents shift from work to home or vice versa.
+        if self.current_time == 0 or self.current_time == int(MINUTES_PER_DAY/2):
+            for agent in self.agents:
+                agent.toggle_focus()
         for agent in self.agents:
-            move = agent.get_movement()
-            new_pos = agent.pos + move # this is why I'm using numpy arrays.
-            new_x, new_y = new_pos.tolist()
             # Generate a move repeatedly until a valid one is found
             attempts = 0 # Number of times we've tried to find a legal move
             while True: # I miss do-while loops
