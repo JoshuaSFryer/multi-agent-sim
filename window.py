@@ -6,20 +6,26 @@ import pygame
 from pygame.locals import *
 import random
 
+# Colour values
 BLACK = (0,0,0)
 WHITE = (255,255,255)
 RED = (255, 0,0)
 BLUE = (0,0,255)
 GREEN = (0,255,0)
 
-MAX_RES_HORIZ = 2560
-MAX_RES_VERT = 1200
+# Window properties
+# Maximum window resolution
+MAX_RES_HORIZ = 1920
+MAX_RES_VERT = 1080
+# Actual window resolution
 WINDOW_RES_HORIZ = 1920
 WINDOW_RES_VERT = 1080
 
+# Number of cells in the environment
 WORLD_WIDTH = 50
 WORLD_HEIGHT = 50
 
+# Size of each cell, in pixels
 BLOCK_SIZE = 200
 BLOCK_SIZE_MIN = 1
 # Automatically scale BLOCK_SIZE to try to fit everything within the window
@@ -133,6 +139,8 @@ def clear_screen():
 def draw_view(env):
     """
     Update the screen to display the contents of the viewport.
+    NB: Viewport functionality is not yet implemented. This function just 
+    updates the display.
     """
     # global vp_curr_x, vp_curr_y, vp_width, vp_height
     # # Determine number of tiles to display along each axis
@@ -196,16 +204,16 @@ def spawn_agent(env):
     env.work_points.append(work_point)
     env.add_focused_agent(home_point, work_point)
 
-def zoom_in():
-    global BLOCK_SIZE, screen
-    BLOCK_SIZE += 1
-    # clear_screen()
+# def zoom_in():
+#     global BLOCK_SIZE, screen
+#     BLOCK_SIZE += 1
+#     # clear_screen()
 
-def zoom_out():
-    global BLOCK_SIZE, screen
-    if BLOCK_SIZE > BLOCK_SIZE_MIN:
-        BLOCK_SIZE -= 1
-        # clear_screen()
+# def zoom_out():
+#     global BLOCK_SIZE, screen
+#     if BLOCK_SIZE > BLOCK_SIZE_MIN:
+#         BLOCK_SIZE -= 1
+#         # clear_screen()
 
 # def pan_view(dx, dy):
 #     global vp_curr_x, vp_curr_y, vp_max_x, vp_max_y

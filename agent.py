@@ -1,7 +1,9 @@
 import numpy as np
-from objects import Object
 import random
-    
+
+from objects import Object
+from direction import Direction
+
 
 class Agent(Object):
     """
@@ -9,13 +11,16 @@ class Agent(Object):
     Agents use their get_movement() method to determine in what direction they
     wish to move.
     """
+
     def __init__(self, parent, x:int, y:int):
         super().__init__(parent, x, y)
 
-    def __str__(self):
-        return '@'
 
     def get_movement(self) -> np.array:
+        """
+        Function that should return a vector representing the movement the agent 
+        will take. 
+        """
         raise NotImplementedError
 
 
@@ -23,10 +28,16 @@ class MeanderingAgent(Agent):
     """
     Agent that moves about randomly, one space at a time.
     """
+
     def __init__(self, parent, x:int, y:int):
         super().__init__(parent, x, y)
         
+
     def get_movement(self) -> np.array:
+        """
+        Pick a cardinal direction to step in, at random.
+        """
+
         dir = random.randint(0,3)
         if dir == 0:
             return Direction.N
@@ -47,7 +58,17 @@ class FocusedAgent(Agent):
     focus point (i.e. the further away the agent is from its focus point, the
     more likely it is to move towards it).
     """
+
     def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, slack:int):
+        """
+        x:  Initial x coordiate of the agent
+        y:  Initial y coordinate of the agent
+        home_point: Coordinate pair representing this agent's home point
+        work_point: Coordinate pair representing this agent's work point
+        slack:      Integer influencing how far the agent can stray from its
+                    current focus point 
+        """
+
         super().__init__(parent, x, y)
         self.home_point = home
         self.work_point = work
@@ -58,9 +79,13 @@ class FocusedAgent(Agent):
 
 
     def get_movement(self):
+        """
+
+        """
+
         R = random.randint(0,299)
         target_vector = self.get_target_vector()
-        distance_factor = self.get_distance(target_vector)/self.slack
+        distance_factor = self.get_distance(target_vector) / self.slack
         target_direction = self.get_compass_direction(target_vector)
 
         if R < 100 + 200 * distance_factor:
@@ -79,7 +104,7 @@ class FocusedAgent(Agent):
             return np.dot(target_direction, Rotation.CW_180)
 
 
-    def get_distance(self, vector):
+    def get_distance(self, vector:np.array) -> int:
         """
         Get the distance (as crow flies, not cartesian) of a vector.
         
@@ -87,23 +112,29 @@ class FocusedAgent(Agent):
         np.linalg.norm(x), is apparently very slow. Credit to
         https://stackoverflow.com/a/9184560, which uses the fact that the dot
         product between a vector and itself is the magnitude squared, to make
-        this call that returns in 1/4 the time:
+        this call that returns in 1/4 the time.
+
+        vector: The vector/coordinate pair in question
+
+        returns: The magnitude of the vector, rounded to the nearest integer
         """
+
         return int(np.round(np.sqrt(vector.dot(vector))))
 
 
     def get_target_vector(self) -> np.array:
         """
-        Get a vector pointing from the agent towards its focus point.
+        Get a vector pointing from the agent towards its focus point.  
         """
+
         return self.focus_point - self.pos
     
 
-    def get_compass_direction(self, vector):
+    def get_compass_direction(self, vector:np.array) -> Direction:
         """
-        Return the direction from the agent to its focus point, normalized to
-        the eight compass directions.
+        Return the direction of a vector, normalized to the eight compass directions.
         """
+
         # Convert from cartesian to polar coordinates
         x, y = vector.tolist()
         r = self.get_distance(vector)
@@ -135,32 +166,30 @@ class FocusedAgent(Agent):
             return Direction.E
         
 
-    def toggle_focus(self):
+    def toggle_focus(self) -> None:
+        """
+        Toggle this agent's focus point between work and home.
+        """
+
         if self.focus_point is self.work_point:
             self.focus_point = self.home_point
         elif self.focus_point is self.home_point:
             self.focus_point = self.work_point
         else:
-            raise ValueError(f"Focus point set to invalid value: {self.focus_point}")
+            raise ValueError(f"Something is internally buggy: \
+                Focus point is somehow set to invalid value: {self.focus_point}")
 
 
 
-class Direction:
-    # Cardinal directions
-    N = np.array([0,-1])
-    E = np.array([1,0])
-    S = np.array([0,1])
-    W = np.array([-1,0])
-    # Diagonal directions
-    NE = np.array([1,-1])
-    SE = np.array([1,1])
-    SW = np.array([-1,1])
-    NW = np.array([-1,-1])
 
-    NONE = np.array([0,0])
 
 
 class Rotation:
+    """
+    Transformation matrices; multiply a vector by one of these matrices to
+    effect a rotation on that vector.
+    """
+
     CCW_270 = np.array([[0, -1], [1, 0]])
     CCW_90 = np.array([[0, 1], [-1, 0]])
     CW_180 = np.array([[-1, 0], [0, -1]])

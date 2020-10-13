@@ -35,32 +35,73 @@ class Environment:
             self.cells.append(row)
 
 
-    def add_meandering_agent(self, x, y):
+    def add_meandering_agent(self, spawn_point:np.array) -> None:
+        """
+        Spawn in a MeanderingAgent.
+
+        spawn_point:    Coordinate pair to spawn the agent at
+        """
+        
+        x, y = spawn_point.tolist()
         new_agent = MeanderingAgent(self, x, y)
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
 
 
-    def add_focused_agent(self, home_point, work_point):
-        # Agent spawns at home
+    def add_focused_agent(self, home_point:np.array, work_point:np.array) -> None:
+        """
+        Spawn in a FocusedAgent.
+
+        home_point: Coordinate pair of the agent's home point
+        work_point: Coordinate pair of the agent's work point
+        """
+
+        # Agent spawns at home, default focus is work
         x, y = home_point.tolist()
         new_agent = FocusedAgent(self, x, y, home_point, work_point, 10)
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
 
 
-    def add_object(self, obj, x, y):
+    def add_object(self, obj:Object, x:int, y:int) -> None:
+        """
+        Add an object to the environment.
+
+        TODO:   Implement collision checking so that an object cannot be placed
+                where one already exists.
+
+        obj:    The object to add
+        x:      The x coordinate at which to place the object
+        y:      The y coordinate at which to place the object
+        """
+
         self.cells[y][x].add_object(obj)
         obj.pos = np.array([x, y])
 
 
-    def remove_object(self, obj):
+    def remove_object(self, obj:Object) -> None:
+        """
+        Remove an object from the environment.
+
+        obj:    The object to remove
+        """
+
         x, y = obj.pos.tolist()
         self.cells[y][x].remove_object(obj)
         self.agents.remove(obj)
 
 
-    def move_object(self, obj, new_x, new_y):
+    def move_object(self, obj:Object, new_x:int, new_y:int) -> None:
+        """
+        Alter the position of an object in the environment.
+        This method does not check against collisions (though perhaps it should),
+        instead assuming that the calling code is concerned with that.
+
+        obj:    The object to move
+        new_x:  The destination x coordinate
+        new_y:  The destination y coordinate
+        """
+
         x, y = obj.pos.tolist()
         self.cells[y][x].remove_object(obj)
         obj.old_pos = np.array([x, y])
@@ -68,10 +109,12 @@ class Environment:
         self.cells[new_y][new_x].add_object(obj)
 
     
-    def tick(self):
+    def tick(self) -> None:
         """
-        Tick the simulation forward one step, allowing Agents to take actions.
+        Tick the simulation forward one step, advancing the simulation clock
+        and allowing Agents to take actions.
         """
+
         # Advance clock by one minute
         self.current_time += 1
         if self.current_time >= MINUTES_PER_DAY:
@@ -81,6 +124,7 @@ class Environment:
         if self.current_time == 0 or self.current_time == int(MINUTES_PER_DAY/2):
             for agent in self.agents:
                 agent.toggle_focus()
+
         for agent in self.agents:
             # Generate a move repeatedly until a valid one is found
             attempts = 0 # Number of times we've tried to find a legal move
@@ -89,7 +133,7 @@ class Environment:
                 move = agent.get_movement()
                 new_pos = agent.pos + move
                 new_x, new_y = new_pos.tolist()
-                if self.validate_move(agent, new_x, new_y):
+                if self.validate_move(new_x, new_y):
                     break
                 # If we exceed the maximum number of attempts, do not move.
                 if attempts >= MAXIMUM_MOVEMENT_ATTEMPTS:
@@ -99,7 +143,17 @@ class Environment:
             self.move_object(agent, new_x, new_y)
                     
 
-    def validate_move(self, agent, x, y):
+    def validate_move(self, x:int, y:int) -> bool:
+        """
+        Check whether a position would be valid to put an object in, using the 
+        following conditions:
+        - The position must be within the bounds of the environment.
+        - The position cannot be already occupied by another object.
+
+        x:  The x coordinate of the space in question
+        y:  The y coordinate of the space in question
+        """
+
         if (x >= self.canvas_size_x or y >= self.canvas_size_y 
             or x < 0 or y < 0):
             return False
