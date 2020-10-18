@@ -40,19 +40,6 @@ while (too_wide or too_tall) and BLOCK_SIZE > BLOCK_SIZE_MIN:
     too_wide = BLOCK_SIZE * WORLD_WIDTH > MAX_RES_HORIZ
     too_tall = BLOCK_SIZE * WORLD_HEIGHT > MAX_RES_VERT
 
-# Viewport design and part of code lifted from https://stackoverflow.com/questions/17680285/pygame-viewport-click-drag#17700693
-# Constraints for the upper-leftmost corner of the viewport
-vp_min_x = 0
-vp_min_y = 0
-vp_max_x = (BLOCK_SIZE * WORLD_WIDTH) - WINDOW_RES_HORIZ
-vp_max_y = (BLOCK_SIZE * WORLD_HEIGHT) - WINDOW_RES_VERT
-vp_curr_x = 0
-vp_curr_y = 0
-# vp_width = math.floor(WINDOW_RES_HORIZ/2)
-# vp_height = math.floor(WINDOW_RES_VERT/2)
-vp_width = 200
-vp_height = 200
-
 NUM_AGENTS = 3
 TICK_DELAY = 500
 
@@ -98,34 +85,6 @@ def main():
             elif event.type == TICK_EVENT:
                 # Tick simulation forward
                 env.tick()
-            
-            # if event.type == MOUSEBUTTONDOWN or event.type == MOUSEBUTTONUP:
-                # # Mouse clicking
-                # if event.type == pygame.MOUSEBUTTONDOWN:
-                #     if event.button == 1:
-                #         print("left mouse down")
-                #         is_dragging = True
-
-                #     elif event.button == 3:
-                #         print("right mouse down")
-
-                # elif event.type == pygame.MOUSEBUTTONUP:
-                #     if event.button == 1:
-                #         print("left mouse up")
-                #         is_dragging = False
-                #     elif event.button == 3:
-                #         print("right mouse up")
-
-                # # Mouse scrolling
-                # if event.button == 4: # Mouse wheel up
-                #     zoom_in()
-                # if event.button == 5: # Mouse wheel down
-                #     zoom_out()
-
-            # elif event.type == MOUSEMOTION:
-            #     if is_dragging:
-            #         dx, dy = pygame.mouse.get_rel()
-            #         pan_view(dx, dy)
 
             # Update the display
             draw_view(env)
@@ -146,18 +105,6 @@ def draw_view(env):
     NB: Viewport functionality is not yet implemented. This function just 
     updates the display.
     """
-    # global vp_curr_x, vp_curr_y, vp_width, vp_height
-    # # Determine number of tiles to display along each axis
-    # vp_tiles_x = math.floor(vp_width / BLOCK_SIZE)
-    # vp_tiles_y = math.floor(vp_height / BLOCK_SIZE)
-
-    # # Get the tile at the top-left-most corner of the viewport
-    # vp_start_tile_x = math.floor(vp_curr_x / BLOCK_SIZE)
-    # vp_start_tile_y = math.floor(vp_curr_y / BLOCK_SIZE)
-    # vp_end_tile_x = vp_start_tile_x + vp_tiles_x
-    # vp_end_tile_y = vp_start_tile_y + vp_tiles_y
-
-    # grid_upleft = env.cells[vp_start_tile_y][vp_start_tile_x]
 
     clear_screen()
     
@@ -172,9 +119,6 @@ def draw_view(env):
     # Get list of agents and display them all
     for a in env.agents:
         x, y = a.pos.tolist()
-        # if ((x >= vp_start_tile_x and x <= vp_end_tile_x) 
-        #     and y >= vp_start_tile_y and y <= vp_end_tile_y):
-        #     draw_square(x, y, RED)
         draw_square(x, y, AGENT_COLOR)
 
     pygame.display.update()

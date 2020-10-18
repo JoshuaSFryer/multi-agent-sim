@@ -147,36 +147,6 @@ class FocusedAgent(Agent):
         directions.
         """
 
-        # # Convert from cartesian to polar coordinates
-        # x, y = vector.tolist()
-        # r = self.get_distance(vector)
-        # if r == 0:
-        #     return Direction.NONE
-        # rad = np.arctan2(y, x)
-        # deg = np.degrees(rad)
-
-        # # transform from [-180,180] to [0,360]
-        # if deg < 0: 
-        #     deg = 360 + deg
-
-        # # Convert degrees into compass direction, roughly.
-        # if deg >= 22.5 and deg < 67.5:
-        #     return Direction.NE
-        # elif deg >= 67.5 and deg < 112.5:
-        #     return Direction.N
-        # elif deg >= 112.5 and deg < 157.5:
-        #     return Direction.NW
-        # elif deg >= 157.5 and deg < 202.5:
-        #     return Direction.W
-        # elif deg >= 202.5 and deg < 247.5:
-        #     return Direction.SW
-        # elif deg >= 247.5 and deg < 292.5:
-        #     return Direction.S
-        # elif deg >= 292.5 and deg < 337.5:
-        #     return Direction.SE
-        # else: # range between 337.5 and 22.5, looping around at 0
-        #     return Direction.E
-
         base_vector = Direction.NONE
         
         x, y = vector.tolist()
