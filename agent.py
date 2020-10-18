@@ -89,7 +89,7 @@ class FocusedAgent(Agent):
 
         target_vector = self.get_target_vector()
         target_direction = self.get_compass_direction(target_vector)   
-         
+
         # If the agent is occupying its focus point, the target vector will be
         # [0,0], and so the agent will stay stuck on that point instead of 
         # orbiting around it. Let's allow it to move in any of the 8 directions,
@@ -193,7 +193,11 @@ class FocusedAgent(Agent):
         return base_vector
 
 
-    def get_random_direction(self):
+    def get_random_direction(self) -> np.array:
+        """
+        Pick a compass direction at random.
+        """
+
         i = random.randint(0,7)
         dir_list = [Direction.N, Direction.E, Direction.S, Direction.W, 
                     Direction.NE, Direction.SE, Direction.SW, Direction.NW]
