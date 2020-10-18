@@ -50,7 +50,7 @@ vp_width = 200
 vp_height = 200
 
 NUM_AGENTS = 3
-TICK_DELAY = 1000
+TICK_DELAY = 500
 
 FPS_CLOCK = pygame.time.Clock()
 

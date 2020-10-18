@@ -78,16 +78,27 @@ class FocusedAgent(Agent):
         self.slack = slack 
 
 
-    def get_movement(self):
+    def get_movement(self) -> np.array:
+        """
+        Move, either directly towards the focus point, or erroneously (parallel)
+        or backwards). The chance of erroneous movement is inversely proportional 
+        to the agent's distance from the focus point, following a linear decay. 
+        Once the agent reaches its focus point, it will be randomly stepping
+        in orbit around it.
         """
 
-        """
-
-        R = random.randint(0,299)
         target_vector = self.get_target_vector()
-        distance_factor = self.get_distance(target_vector) / self.slack
-        target_direction = self.get_compass_direction(target_vector)
+        target_direction = self.get_compass_direction(target_vector)   
+         
+        # If the agent is occupying its focus point, the target vector will be
+        # [0,0], and so the agent will stay stuck on that point instead of 
+        # orbiting around it. Let's allow it to move in any of the 8 directions,
+        # with equal probability.     
+        if np.array_equal(target_direction, Direction.NONE):
+            return self.get_random_direction()
 
+        distance_factor = self.get_distance(target_vector) / self.slack
+        R = random.randint(0,299)
         if R < 100 + 200 * distance_factor:
             # Move along the target vector directly towards focus point
             return target_direction
@@ -132,39 +143,62 @@ class FocusedAgent(Agent):
 
     def get_compass_direction(self, vector:np.array) -> Direction:
         """
-        Return the direction of a vector, normalized to the eight compass directions.
+        Return the direction of a vector, normalized to one of the eight compass
+        directions.
         """
 
-        # Convert from cartesian to polar coordinates
-        x, y = vector.tolist()
-        r = self.get_distance(vector)
-        if r == 0:
-            return Direction.NONE
-        rad = np.arctan2(y, x)
-        deg = np.degrees(rad)
+        # # Convert from cartesian to polar coordinates
+        # x, y = vector.tolist()
+        # r = self.get_distance(vector)
+        # if r == 0:
+        #     return Direction.NONE
+        # rad = np.arctan2(y, x)
+        # deg = np.degrees(rad)
 
-        # transform from [-180,180] to [0,360]
-        if deg < 0: 
-            deg = 360 + deg
+        # # transform from [-180,180] to [0,360]
+        # if deg < 0: 
+        #     deg = 360 + deg
 
-        # Convert degrees into compass direction, roughly.
-        if deg >= 22.5 and deg < 67.5:
-            return Direction.NE
-        elif deg >= 67.5 and deg < 112.5:
-            return Direction.N
-        elif deg >= 112.5 and deg < 157.5:
-            return Direction.NW
-        elif deg >= 157.5 and deg < 202.5:
-            return Direction.W
-        elif deg >= 202.5 and deg < 247.5:
-            return Direction.SW
-        elif deg >= 247.5 and deg < 292.5:
-            return Direction.S
-        elif deg >= 292.5 and deg < 337.5:
-            return Direction.SE
-        else: # range between 337.5 and 22.5, looping around at 0
-            return Direction.E
+        # # Convert degrees into compass direction, roughly.
+        # if deg >= 22.5 and deg < 67.5:
+        #     return Direction.NE
+        # elif deg >= 67.5 and deg < 112.5:
+        #     return Direction.N
+        # elif deg >= 112.5 and deg < 157.5:
+        #     return Direction.NW
+        # elif deg >= 157.5 and deg < 202.5:
+        #     return Direction.W
+        # elif deg >= 202.5 and deg < 247.5:
+        #     return Direction.SW
+        # elif deg >= 247.5 and deg < 292.5:
+        #     return Direction.S
+        # elif deg >= 292.5 and deg < 337.5:
+        #     return Direction.SE
+        # else: # range between 337.5 and 22.5, looping around at 0
+        #     return Direction.E
+
+        base_vector = Direction.NONE
         
+        x, y = vector.tolist()
+        if x > 0:
+            base_vector = base_vector + Direction.E
+        elif x < 0:
+            base_vector = base_vector + Direction.W
+        
+        if y > 0:
+            base_vector = base_vector + Direction.S
+        elif y < 0:
+            base_vector = base_vector + Direction.N
+
+        return base_vector
+
+
+    def get_random_direction(self):
+        i = random.randint(0,7)
+        dir_list = [Direction.N, Direction.E, Direction.S, Direction.W, 
+                    Direction.NE, Direction.SE, Direction.SW, Direction.NW]
+        return dir_list[i]
+
 
     def toggle_focus(self) -> None:
         """
