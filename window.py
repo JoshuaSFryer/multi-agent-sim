@@ -13,6 +13,10 @@ RED = (255, 0,0)
 BLUE = (0,0,255)
 GREEN = (0,255,0)
 
+AGENT_COLOR = RED
+HOME_COLOR = GREEN
+WORK_COLOR = BLUE
+
 # Window properties
 # Maximum window resolution
 MAX_RES_HORIZ = 1920
@@ -159,11 +163,11 @@ def draw_view(env):
     
     for p in env.home_points:
         x, y = p.tolist()
-        draw_square(x, y, GREEN)
+        draw_square(x, y, HOME_COLOR)
 
     for p in env.work_points:
         x, y = p.tolist()
-        draw_square(x, y, BLUE)
+        draw_square(x, y, WORK_COLOR)
 
     # Get list of agents and display them all
     for a in env.agents:
@@ -171,9 +175,8 @@ def draw_view(env):
         # if ((x >= vp_start_tile_x and x <= vp_end_tile_x) 
         #     and y >= vp_start_tile_y and y <= vp_end_tile_y):
         #     draw_square(x, y, RED)
-        draw_square(x, y, RED)
+        draw_square(x, y, AGENT_COLOR)
 
-    
     pygame.display.update()
 
 
