@@ -211,6 +211,7 @@ class BiologicalAgent(FocusedAgent):
 
         super().__init__(parent, x, y, home, work, slack)
         self.disease_status = diseased
+        self.infection_time = None
 
 
     def infect(self):
@@ -220,6 +221,7 @@ class BiologicalAgent(FocusedAgent):
 
         if self.disease_status == sir.SUSCEPTIBLE:
             self.disease_status = sir.INFECTED
+            self.infection_time = 0
         else:
             raise ValueError("Cannot infect agent: \
                             Agent is not susceptible to infection.")

@@ -11,6 +11,7 @@ from objects import *
 MAXIMUM_MOVEMENT_ATTEMPTS = 20
 
 INFECTION_RADIUS = 2
+DISEASE_DURATION = 10
 
 MINUTES_PER_DAY = 1440
 
@@ -144,6 +145,13 @@ class Environment:
 
         # Check for infections
         for inf in self.infected_agents:
+            inf.infection_time += 1
+            # Recover from disease if enough time has passed.
+            if inf.infection_time >= DISEASE_DURATION:
+                self.recover_agent(inf)
+                break
+
+            # Check for disease spread
             # TODO: Optimize this to only do a local search somehow.
             for agent in self.agents:
                 if not (agent is inf):
@@ -205,4 +213,4 @@ class Environment:
         except ValueError:
             # The agent could not be cured (it wasn't infected).
             return
-        self.infect_agent.remove(agent)  
+        self.infected_agents.remove(agent)  
