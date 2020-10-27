@@ -240,6 +240,9 @@ class BiologicalAgent(FocusedAgent):
     def is_infected(self) -> bool:
         return self.disease_status == sir.INFECTED
 
+    def is_susceptible(self) -> bool:
+        return self.disease_status == sir.SUSCEPTIBLE
+
 
 
 class Rotation:

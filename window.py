@@ -13,11 +13,13 @@ RED = (255, 0,0)
 BLUE = (0,0,255)
 GREEN = (0,255,0)
 ORANGE = (255,128,0)
+YELLOW = (255, 255, 0)
 
 AGENT_COLOR = RED
 HOME_COLOR = GREEN
 WORK_COLOR = BLUE
 INFECTED_COLOR = ORANGE
+RECOVERED_COLOR = YELLOW
 
 # Window properties
 # Maximum window resolution
@@ -124,10 +126,12 @@ def draw_view(env):
     # Get list of agents and display them all
     for a in env.agents:
         x, y = a.pos.tolist()
-        if a.is_infected():
+        if a.is_susceptible():
+            draw_square(x, y, AGENT_COLOR)
+        elif a.is_infected():
             draw_square(x, y, INFECTED_COLOR)
         else:
-            draw_square(x, y, AGENT_COLOR)
+            draw_square(x, y, RECOVERED_COLOR)
 
     pygame.display.update()
 
