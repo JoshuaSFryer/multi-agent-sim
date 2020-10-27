@@ -3,6 +3,8 @@ import random
 
 from objects import Object
 from direction import Direction
+from sir import SIR_status as sir
+
 
 
 class Agent(Object):
@@ -188,7 +190,50 @@ class FocusedAgent(Agent):
                 Focus point is somehow set to invalid value: {self.focus_point}")
 
 
+class BiologicalAgent(FocusedAgent):
+    """
+    Agent that is susceptible to catching and spreading disease.
+    """
+    
+    def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
+                    slack:int, diseased=sir.SUSCEPTIBLE):
+        """
+        x:  Initial x coordiate of the agent
+        y:  Initial y coordinate of the agent
+        home_point: Coordinate pair representing this agent's home point
+        work_point: Coordinate pair representing this agent's work point
+        slack:      Integer influencing how far the agent can stray from its
+                    current focus point 
+        diseased:   SIR status for the agent upon creation. Most agents should
+                    be created as susceptible, but this allows for seeding 
+                    an agent as infected.
+        """
 
+        super().__init__(parent, x, y, home, work, slack)
+        self.disease_status = diseased
+
+
+    def infect(self):
+        """
+        Infect the agent with the disease, if it is susceptible.
+        """
+
+        if self.disease_status == sir.SUSCEPTIBLE:
+            self.disease_status = sir.INFECTED
+        else:
+            raise ValueError("Cannot infect agent: \
+                            Agent is not susceptible to infection.")
+    
+
+    def recover(self):
+        """
+        Cure the agent of the disease, if it is infected.
+        """
+
+        if self.disease_status == sir.INFECTED:
+            self.disease_status = sir.RECOVERED
+        else:
+            raise ValueError("Cannot recover agent: Agent is not infected")
 
 
 

@@ -20,6 +20,7 @@ class Environment:
 
         self.cells = list() # 2D list, forming a grid
         self.agents = list()
+        self.infected_agents = list()
         self.home_points = list()
         self.work_points = list()
 
