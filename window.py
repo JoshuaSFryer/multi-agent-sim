@@ -12,10 +12,12 @@ WHITE = (255,255,255)
 RED = (255, 0,0)
 BLUE = (0,0,255)
 GREEN = (0,255,0)
+ORANGE = (255,128,0)
 
 AGENT_COLOR = RED
 HOME_COLOR = GREEN
 WORK_COLOR = BLUE
+INFECTED_COLOR = ORANGE
 
 # Window properties
 # Maximum window resolution
@@ -40,7 +42,7 @@ while (too_wide or too_tall) and BLOCK_SIZE > BLOCK_SIZE_MIN:
     too_wide = BLOCK_SIZE * WORLD_WIDTH > MAX_RES_HORIZ
     too_tall = BLOCK_SIZE * WORLD_HEIGHT > MAX_RES_VERT
 
-NUM_AGENTS = 3
+NUM_AGENTS = 30
 TICK_DELAY = 500
 
 FPS_CLOCK = pygame.time.Clock()
@@ -69,6 +71,9 @@ def main():
     env = Environment(WORLD_WIDTH, WORLD_HEIGHT)
     for i in range(NUM_AGENTS):
         spawn_agent(env)
+
+    # Infect one of the agents
+    env.infect_agent(env.agents[0])
 
     pygame.display.update()
     
@@ -119,7 +124,10 @@ def draw_view(env):
     # Get list of agents and display them all
     for a in env.agents:
         x, y = a.pos.tolist()
-        draw_square(x, y, AGENT_COLOR)
+        if a.is_infected():
+            draw_square(x, y, INFECTED_COLOR)
+        else:
+            draw_square(x, y, AGENT_COLOR)
 
     pygame.display.update()
 
@@ -149,7 +157,8 @@ def spawn_agent(env):
 
     env.home_points.append(home_point)
     env.work_points.append(work_point)
-    env.add_focused_agent(home_point, work_point)
+    # env.add_focused_agent(home_point, work_point)
+    env.add_bio_agent(home_point, work_point)
 
 # def zoom_in():
 #     global BLOCK_SIZE, screen

@@ -4,11 +4,13 @@ agents, walls, etc). When its tick() method is called, it will execute an
 update on the system, where all the agents will execute a movement based on
 their own logic.
 """
-from agent import MeanderingAgent, FocusedAgent
+from agent import *
 from cell import Cell
 from objects import *
 
 MAXIMUM_MOVEMENT_ATTEMPTS = 20
+
+INFECTION_RADIUS = 2
 
 MINUTES_PER_DAY = 1440
 
@@ -60,6 +62,20 @@ class Environment:
         # Agent spawns at home, default focus is work
         x, y = home_point.tolist()
         new_agent = FocusedAgent(self, x, y, home_point, work_point, 10)
+        self.add_object(new_agent, x, y)
+        self.agents.append(new_agent)
+
+    def add_bio_agent(self, home_point:np.array, work_point:np.array) -> None:
+        """
+        Spawn in a BiologicalAgent
+
+        home_point: Coordinate pair of the agent's home point
+        work_point: Coordinate pair of the agent's work point
+        """
+
+        # Agent spawns at home, default focus is work
+        x, y = home_point.tolist()
+        new_agent = BiologicalAgent(self, x, y, home_point, work_point, 10)
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
 
@@ -126,6 +142,18 @@ class Environment:
             for agent in self.agents:
                 agent.toggle_focus()
 
+        # Check for infections
+        for inf in self.infected_agents:
+            # TODO: Optimize this to only do a local search somehow.
+            for agent in self.agents:
+                if not (agent is inf):
+                    displacement = agent.pos - inf.pos
+                    if agent.get_distance(displacement) <= INFECTION_RADIUS:
+                        try:
+                            self.infect_agent(agent)
+                        except ValueError:
+                            pass
+
         for agent in self.agents:
             # Generate a move repeatedly until a valid one is found
             attempts = 0 # Number of times we've tried to find a legal move
@@ -163,3 +191,18 @@ class Environment:
 
         return True
     
+    def infect_agent(self, agent):
+        try:
+            agent.infect()
+        except ValueError:
+            # The agent could not be infected (already infected, or immune).
+            return
+        self.infected_agents.append(agent)
+
+    def recover_agent(self, agent):
+        try:
+            agent.recover()
+        except ValueError:
+            # The agent could not be cured (it wasn't infected).
+            return
+        self.infect_agent.remove(agent)  

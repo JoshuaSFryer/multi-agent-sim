@@ -235,6 +235,9 @@ class BiologicalAgent(FocusedAgent):
         else:
             raise ValueError("Cannot recover agent: Agent is not infected")
 
+    def is_infected(self) -> bool:
+        return self.disease_status == sir.INFECTED
+
 
 
 class Rotation:
