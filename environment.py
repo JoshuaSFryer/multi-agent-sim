@@ -4,12 +4,11 @@ agents, walls, etc). When its tick() method is called, it will execute an
 update on the system, where all the agents will execute a movement based on
 their own logic.
 """
-from agent import MeanderingAgent, FocusedAgent
+from agent import *
 from cell import Cell
 from objects import *
 
 MAXIMUM_MOVEMENT_ATTEMPTS = 20
-
 MINUTES_PER_DAY = 1440
 
 class Environment:
@@ -20,6 +19,7 @@ class Environment:
 
         self.cells = list() # 2D list, forming a grid
         self.agents = list()
+        self.infected_agents = list()
         self.home_points = list()
         self.work_points = list()
 
@@ -59,6 +59,21 @@ class Environment:
         # Agent spawns at home, default focus is work
         x, y = home_point.tolist()
         new_agent = FocusedAgent(self, x, y, home_point, work_point, 10)
+        self.add_object(new_agent, x, y)
+        self.agents.append(new_agent)
+
+
+    def add_bio_agent(self, home_point:np.array, work_point:np.array) -> None:
+        """
+        Spawn in a BiologicalAgent
+
+        home_point: Coordinate pair of the agent's home point
+        work_point: Coordinate pair of the agent's work point
+        """
+
+        # Agent spawns at home, default focus is work
+        x, y = home_point.tolist()
+        new_agent = BiologicalAgent(self, x, y, home_point, work_point, 10)
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
 
@@ -125,19 +140,39 @@ class Environment:
             for agent in self.agents:
                 agent.toggle_focus()
 
+        # Check for infections
+        for inf in self.infected_agents:
+            if inf.is_infected():
+                inf.progress_infection()
+            else:
+                self.infected_agents.remove(inf)
+
+            # Check for disease spread
+            # TODO: Optimize this to only do a local search somehow.
+            for agent in self.agents:
+                if not (agent is inf):
+                    displacement = agent.pos - inf.pos
+                    if agent.get_distance(displacement) <= INFECTION_RADIUS:
+                        try:
+                            if random.random() >= INFECTION_PROBABILITY:
+                                self.infect_agent(agent)
+                        except ValueError:
+                            pass
+
         for agent in self.agents:
             # Generate a move repeatedly until a valid one is found
             attempts = 0 # Number of times we've tried to find a legal move
             while True: # I miss do-while loops
                 attempts += 1
-                move = agent.get_movement()
+                if attempts < MAXIMUM_MOVEMENT_ATTEMPTS:
+                    move = agent.get_movement()
+                else:
+                    # Pick a move at random to try to break the deadlock.
+                    move = random.choice(Direction.direction_list)
+                    
                 new_pos = agent.pos + move
                 new_x, new_y = new_pos.tolist()
                 if self.validate_move(new_x, new_y):
-                    break
-                # If we exceed the maximum number of attempts, do not move.
-                if attempts >= MAXIMUM_MOVEMENT_ATTEMPTS:
-                    new_x, new_y = agent.pos.tolist() # use the current coordinates
                     break
             # Execute the move
             self.move_object(agent, new_x, new_y)
@@ -162,3 +197,18 @@ class Environment:
 
         return True
     
+    def infect_agent(self, agent:BiologicalAgent):
+        try:
+            agent.infect()
+        except ValueError:
+            # The agent could not be infected (already infected, or immune).
+            return
+        self.infected_agents.append(agent)
+
+    def recover_agent(self, agent:BiologicalAgent):
+        try:
+            agent.recover()
+        except ValueError:
+            # The agent could not be cured (it wasn't infected).
+            return
+        self.infected_agents.remove(agent)  

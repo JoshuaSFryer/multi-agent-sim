@@ -6,16 +6,23 @@ import pygame
 from pygame.locals import *
 import random
 
+from simulation_parameters import *
+
 # Colour values
 BLACK = (0,0,0)
 WHITE = (255,255,255)
 RED = (255, 0,0)
 BLUE = (0,0,255)
 GREEN = (0,255,0)
+ORANGE = (255,128,0)
+YELLOW = (255, 255, 0)
+PURPLE = (255, 0, 255)
 
 AGENT_COLOR = RED
 HOME_COLOR = GREEN
 WORK_COLOR = BLUE
+INFECTED_COLOR = ORANGE
+RECOVERED_COLOR = YELLOW
 
 # Window properties
 # Maximum window resolution
@@ -40,7 +47,7 @@ while (too_wide or too_tall) and BLOCK_SIZE > BLOCK_SIZE_MIN:
     too_wide = BLOCK_SIZE * WORLD_WIDTH > MAX_RES_HORIZ
     too_tall = BLOCK_SIZE * WORLD_HEIGHT > MAX_RES_VERT
 
-NUM_AGENTS = 3
+
 TICK_DELAY = 500
 
 FPS_CLOCK = pygame.time.Clock()
@@ -70,6 +77,10 @@ def main():
     for i in range(NUM_AGENTS):
         spawn_agent(env)
 
+    # Infect some of the agents
+    for _ in range(int(math.ceil(NUM_AGENTS * INITIAL_INFECTED_PERCENT))):
+        env.infect_agent(env.agents[0])
+
     pygame.display.update()
     
     TICK_EVENT = pygame.USEREVENT
@@ -95,9 +106,11 @@ def draw_square(x, y, color):
     rect = pygame.Rect(x*(BLOCK_SIZE), y*(BLOCK_SIZE), BLOCK_SIZE, BLOCK_SIZE)
     pygame.draw.rect(screen, color, rect)
 
+
 def clear_screen():
     global screen
     screen.fill(WHITE)
+
 
 def draw_view(env):
     """
@@ -119,7 +132,12 @@ def draw_view(env):
     # Get list of agents and display them all
     for a in env.agents:
         x, y = a.pos.tolist()
-        draw_square(x, y, AGENT_COLOR)
+        if a.is_susceptible():
+            draw_square(x, y, AGENT_COLOR)
+        elif a.is_infected():
+            draw_square(x, y, INFECTED_COLOR)
+        else:
+            draw_square(x, y, RECOVERED_COLOR)
 
     pygame.display.update()
 
@@ -149,7 +167,8 @@ def spawn_agent(env):
 
     env.home_points.append(home_point)
     env.work_points.append(work_point)
-    env.add_focused_agent(home_point, work_point)
+    # env.add_focused_agent(home_point, work_point)
+    env.add_bio_agent(home_point, work_point)
 
 # def zoom_in():
 #     global BLOCK_SIZE, screen

@@ -3,6 +3,9 @@ import random
 
 from objects import Object
 from direction import Direction
+from simulation_parameters import *
+from sir import SIR_status as sir
+
 
 
 class Agent(Object):
@@ -38,15 +41,8 @@ class MeanderingAgent(Agent):
         Pick a cardinal direction to step in, at random.
         """
 
-        dir = random.randint(0,3)
-        if dir == 0:
-            return Direction.N
-        elif dir == 1:
-            return Direction.E
-        elif dir == 2:
-            return Direction.S
-        elif dir == 3:
-            return Direction.W
+        dirs = [Direction.N, Direction.E, Direction.S, Direction.W]
+        return random.choice(dirs)
 
 
 class FocusedAgent(Agent):
@@ -105,11 +101,8 @@ class FocusedAgent(Agent):
         elif R < 200 + 100 * distance_factor:
             # Move perpendicular to the target vector
             # 50/50 chance of moving 'right' or 'left' relative to the vector
-            left_right = random.randint(0,9)
-            if left_right >= 5:
-                return np.dot(target_direction, Rotation.CCW_270)
-            else:
-                return np.dot(target_direction, Rotation.CCW_90)
+            rot = random.choice([Rotation.CCW_90, Rotation.CCW_270])
+            return np.dot(target_direction, rot)
         else:
             # Move along the target vector, away from the focus point
             return np.dot(target_direction, Rotation.CW_180)
@@ -167,11 +160,8 @@ class FocusedAgent(Agent):
         """
         Pick a compass direction at random.
         """
-
-        i = random.randint(0,7)
-        dir_list = [Direction.N, Direction.E, Direction.S, Direction.W, 
-                    Direction.NE, Direction.SE, Direction.SW, Direction.NW]
-        return dir_list[i]
+        
+        return random.choice(Direction.direction_list)
 
 
     def toggle_focus(self) -> None:
@@ -188,9 +178,82 @@ class FocusedAgent(Agent):
                 Focus point is somehow set to invalid value: {self.focus_point}")
 
 
+class BiologicalAgent(FocusedAgent):
+    """
+    Agent that is susceptible to catching and spreading disease.
+    """
+    
+    def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
+                    slack:int, diseased=sir.SUSCEPTIBLE):
+        """
+        x:  Initial x coordiate of the agent
+        y:  Initial y coordinate of the agent
+        home_point: Coordinate pair representing this agent's home point
+        work_point: Coordinate pair representing this agent's work point
+        slack:      Integer influencing how far the agent can stray from its
+                    current focus point 
+        diseased:   SIR status for the agent upon creation. Most agents should
+                    be created as susceptible, but this allows for seeding 
+                    an agent as infected.
+        """
+
+        super().__init__(parent, x, y, home, work, slack)
+        self.disease_status = diseased
+        self.infection_time = None
 
 
+    def infect(self):
+        """
+        Infect the agent with the disease, if it is susceptible.
+        """
 
+        if self.disease_status == sir.SUSCEPTIBLE:
+            self.disease_status = sir.INCUBATING_SAFE
+            self.infection_time = 0
+        else:
+            raise ValueError("Cannot infect agent: \
+                            Agent is not susceptible to infection.")
+
+
+    def progress_infection(self):
+        """
+        Advance the infection, ticking the infection timer forward and
+        progressing to the next state of infection if sufficient time has
+        passed.
+        """
+        
+        self.infection_time += 1
+        if self.disease_status == sir.INCUBATING_SAFE:
+            if self.infection_time >= INCUBATION_SAFE_TIME:
+                self.disease_status = sir.INCUBATING_CONTAGIOUS
+                self.infection_time = 0
+        
+        elif self.disease_status == sir.INCUBATING_CONTAGIOUS:
+            if self.infection_time >= INCUBATION_CONTAGIOUS_TIME:
+                self.disease_status = sir.SYMPTOMATIC
+                self.infection_time = 0
+        
+        elif self.disease_status == sir.SYMPTOMATIC:
+            if self.infection_time >= SYMPTOMATIC_TIME:
+                self.disease_status = sir.RECOVERED
+
+        else:
+            raise RuntimeError("progress_infection() called on uninfected agent")
+
+
+    def is_infected(self) -> bool:
+        return self.disease_status in ( sir.INCUBATING_SAFE, 
+                                        sir.INCUBATING_CONTAGIOUS,
+                                        sir.SYMPTOMATIC
+                                        )
+
+
+    def is_susceptible(self) -> bool:
+        return self.disease_status == sir.SUSCEPTIBLE
+
+
+    def is_contagious(self) -> bool:
+        return self.disease_status in (sir.INCUBATING_CONTAGIOUS, sir.INFECTED)
 
 class Rotation:
     """
