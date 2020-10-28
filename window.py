@@ -45,6 +45,7 @@ while (too_wide or too_tall) and BLOCK_SIZE > BLOCK_SIZE_MIN:
     too_tall = BLOCK_SIZE * WORLD_HEIGHT > MAX_RES_VERT
 
 NUM_AGENTS = 30
+INITIAL_INFECTED_PERCENT = 0.02
 TICK_DELAY = 500
 
 FPS_CLOCK = pygame.time.Clock()
@@ -74,8 +75,9 @@ def main():
     for i in range(NUM_AGENTS):
         spawn_agent(env)
 
-    # Infect one of the agents
-    env.infect_agent(env.agents[0])
+    # Infect some of the agents
+    for _ in range(int(math.ceil(NUM_AGENTS * INITIAL_INFECTED_PERCENT))):
+        env.infect_agent(env.agents[0])
 
     pygame.display.update()
     
@@ -102,9 +104,11 @@ def draw_square(x, y, color):
     rect = pygame.Rect(x*(BLOCK_SIZE), y*(BLOCK_SIZE), BLOCK_SIZE, BLOCK_SIZE)
     pygame.draw.rect(screen, color, rect)
 
+
 def clear_screen():
     global screen
     screen.fill(WHITE)
+
 
 def draw_view(env):
     """
