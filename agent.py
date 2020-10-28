@@ -216,6 +216,12 @@ class BiologicalAgent(FocusedAgent):
 
 
     def progress_infection(self):
+        """
+        Advance the infection, ticking the infection timer forward and
+        progressing to the next state of infection if sufficient time has
+        passed.
+        """
+        
         self.infection_time += 1
         if self.disease_status == sir.INCUBATING_SAFE:
             if self.infection_time >= INCUBATION_SAFE_TIME:
