@@ -40,15 +40,8 @@ class MeanderingAgent(Agent):
         Pick a cardinal direction to step in, at random.
         """
 
-        dir = random.randint(0,3)
-        if dir == 0:
-            return Direction.N
-        elif dir == 1:
-            return Direction.E
-        elif dir == 2:
-            return Direction.S
-        elif dir == 3:
-            return Direction.W
+        dirs = [Direction.N, Direction.E, Direction.S, Direction.W]
+        return random.choice(dirs)
 
 
 class FocusedAgent(Agent):
@@ -107,11 +100,8 @@ class FocusedAgent(Agent):
         elif R < 200 + 100 * distance_factor:
             # Move perpendicular to the target vector
             # 50/50 chance of moving 'right' or 'left' relative to the vector
-            left_right = random.randint(0,9)
-            if left_right >= 5:
-                return np.dot(target_direction, Rotation.CCW_270)
-            else:
-                return np.dot(target_direction, Rotation.CCW_90)
+            rot = random.choice([Rotation.CCW_90, Rotation.CCW_270])
+            return np.dot(target_direction, rot)
         else:
             # Move along the target vector, away from the focus point
             return np.dot(target_direction, Rotation.CW_180)
@@ -169,11 +159,8 @@ class FocusedAgent(Agent):
         """
         Pick a compass direction at random.
         """
-
-        i = random.randint(0,7)
-        dir_list = [Direction.N, Direction.E, Direction.S, Direction.W, 
-                    Direction.NE, Direction.SE, Direction.SW, Direction.NW]
-        return dir_list[i]
+        
+        return random.choice(Direction.direction_list)
 
 
     def toggle_focus(self) -> None:
@@ -237,8 +224,10 @@ class BiologicalAgent(FocusedAgent):
         else:
             raise ValueError("Cannot recover agent: Agent is not infected")
 
+
     def is_infected(self) -> bool:
         return self.disease_status == sir.INFECTED
+
 
     def is_susceptible(self) -> bool:
         return self.disease_status == sir.SUSCEPTIBLE

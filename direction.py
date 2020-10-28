@@ -14,4 +14,4 @@ class Direction:
 
     NONE = np.array([0,0])
 
-    direction_list = [N,E,S,W,NE,SE,SW,NW,NONE]
+    direction_list = [N,E,S,W,NE,SE,SW,NW]
