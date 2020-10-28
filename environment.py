@@ -12,6 +12,7 @@ MAXIMUM_MOVEMENT_ATTEMPTS = 20
 
 INFECTION_RADIUS = 2
 DISEASE_DURATION = 20
+INFECTION_PROBABILITY = 0.7
 
 MINUTES_PER_DAY = 1440
 
@@ -65,6 +66,7 @@ class Environment:
         new_agent = FocusedAgent(self, x, y, home_point, work_point, 10)
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
+
 
     def add_bio_agent(self, home_point:np.array, work_point:np.array) -> None:
         """
@@ -158,7 +160,8 @@ class Environment:
                     displacement = agent.pos - inf.pos
                     if agent.get_distance(displacement) <= INFECTION_RADIUS:
                         try:
-                            self.infect_agent(agent)
+                            if random.random() >= INFECTION_PROBABILITY:
+                                self.infect_agent(agent)
                         except ValueError:
                             pass
 
@@ -167,14 +170,15 @@ class Environment:
             attempts = 0 # Number of times we've tried to find a legal move
             while True: # I miss do-while loops
                 attempts += 1
-                move = agent.get_movement()
+                if attempts < MAXIMUM_MOVEMENT_ATTEMPTS:
+                    move = agent.get_movement()
+                else:
+                    # Pick a move at random to try to break the deadlock.
+                    move = random.choice(Direction.direction_list)
+                    
                 new_pos = agent.pos + move
                 new_x, new_y = new_pos.tolist()
                 if self.validate_move(new_x, new_y):
-                    break
-                # If we exceed the maximum number of attempts, do not move.
-                if attempts >= MAXIMUM_MOVEMENT_ATTEMPTS:
-                    new_x, new_y = agent.pos.tolist() # use the current coordinates
                     break
             # Execute the move
             self.move_object(agent, new_x, new_y)
@@ -199,7 +203,7 @@ class Environment:
 
         return True
     
-    def infect_agent(self, agent):
+    def infect_agent(self, agent:BiologicalAgent):
         try:
             agent.infect()
         except ValueError:
@@ -207,7 +211,7 @@ class Environment:
             return
         self.infected_agents.append(agent)
 
-    def recover_agent(self, agent):
+    def recover_agent(self, agent:BiologicalAgent):
         try:
             agent.recover()
         except ValueError:
