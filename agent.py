@@ -3,6 +3,7 @@ import random
 
 from objects import Object
 from direction import Direction
+from simulation_parameters import *
 from sir import SIR_status as sir
 
 
@@ -207,32 +208,46 @@ class BiologicalAgent(FocusedAgent):
         """
 
         if self.disease_status == sir.SUSCEPTIBLE:
-            self.disease_status = sir.INFECTED
+            self.disease_status = sir.INCUBATING_SAFE
             self.infection_time = 0
         else:
             raise ValueError("Cannot infect agent: \
                             Agent is not susceptible to infection.")
-    
 
-    def recover(self):
-        """
-        Cure the agent of the disease, if it is infected.
-        """
 
-        if self.disease_status == sir.INFECTED:
-            self.disease_status = sir.RECOVERED
+    def progress_infection(self):
+        self.infection_time += 1
+        if self.disease_status == sir.INCUBATING_SAFE:
+            if self.infection_time >= INCUBATION_SAFE_TIME:
+                self.disease_status = sir.INCUBATING_CONTAGIOUS
+                self.infection_time = 0
+        
+        elif self.disease_status == sir.INCUBATING_CONTAGIOUS:
+            if self.infection_time >= INCUBATION_CONTAGIOUS_TIME:
+                self.disease_status = sir.SYMPTOMATIC
+                self.infection_time = 0
+        
+        elif self.disease_status == sir.SYMPTOMATIC:
+            if self.infection_time >= SYMPTOMATIC_TIME:
+                self.disease_status = sir.RECOVERED
+
         else:
-            raise ValueError("Cannot recover agent: Agent is not infected")
+            raise RuntimeError("progress_infection() called on uninfected agent")
 
 
     def is_infected(self) -> bool:
-        return self.disease_status == sir.INFECTED
+        return self.disease_status in ( sir.INCUBATING_SAFE, 
+                                        sir.INCUBATING_CONTAGIOUS,
+                                        sir.SYMPTOMATIC
+                                        )
 
 
     def is_susceptible(self) -> bool:
         return self.disease_status == sir.SUSCEPTIBLE
 
 
+    def is_contagious(self) -> bool:
+        return self.disease_status in (sir.INCUBATING_CONTAGIOUS, sir.INFECTED)
 
 class Rotation:
     """

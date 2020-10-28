@@ -9,11 +9,6 @@ from cell import Cell
 from objects import *
 
 MAXIMUM_MOVEMENT_ATTEMPTS = 20
-
-INFECTION_RADIUS = 2
-DISEASE_DURATION = 20
-INFECTION_PROBABILITY = 0.7
-
 MINUTES_PER_DAY = 1440
 
 class Environment:
@@ -147,11 +142,10 @@ class Environment:
 
         # Check for infections
         for inf in self.infected_agents:
-            inf.infection_time += 1
-            # Recover from disease if enough time has passed.
-            if inf.infection_time >= DISEASE_DURATION:
-                self.recover_agent(inf)
-                break
+            if inf.is_infected():
+                inf.progress_infection()
+            else:
+                self.infected_agents.remove(inf)
 
             # Check for disease spread
             # TODO: Optimize this to only do a local search somehow.

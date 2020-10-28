@@ -2,5 +2,7 @@ from enum import Enum
 
 class SIR_status(Enum):
     SUSCEPTIBLE = 1
-    INFECTED = 2
-    RECOVERED = 3
+    INCUBATING_SAFE = 2
+    INCUBATING_CONTAGIOUS = 3
+    SYMPTOMATIC = 4
+    RECOVERED = 5

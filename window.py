@@ -6,6 +6,8 @@ import pygame
 from pygame.locals import *
 import random
 
+from simulation_parameters import *
+
 # Colour values
 BLACK = (0,0,0)
 WHITE = (255,255,255)
@@ -14,6 +16,7 @@ BLUE = (0,0,255)
 GREEN = (0,255,0)
 ORANGE = (255,128,0)
 YELLOW = (255, 255, 0)
+PURPLE = (255, 0, 255)
 
 AGENT_COLOR = RED
 HOME_COLOR = GREEN
@@ -44,8 +47,7 @@ while (too_wide or too_tall) and BLOCK_SIZE > BLOCK_SIZE_MIN:
     too_wide = BLOCK_SIZE * WORLD_WIDTH > MAX_RES_HORIZ
     too_tall = BLOCK_SIZE * WORLD_HEIGHT > MAX_RES_VERT
 
-NUM_AGENTS = 30
-INITIAL_INFECTED_PERCENT = 0.02
+
 TICK_DELAY = 500
 
 FPS_CLOCK = pygame.time.Clock()
