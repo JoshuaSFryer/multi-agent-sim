@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import uuid
 
 from objects import Object
 from direction import Direction
@@ -17,6 +18,10 @@ class Agent(Object):
 
     def __init__(self, parent, x:int, y:int):
         super().__init__(parent, x, y)
+        # Unique ID to track each agent
+        self.ID = uuid.uuid4()
+        # Set of other agents this one has been in contact with
+        self.contacts = set()
 
 
     def get_movement(self) -> np.array:
@@ -199,7 +204,7 @@ class BiologicalAgent(FocusedAgent):
 
         super().__init__(parent, x, y, home, work, slack)
         self.disease_status = diseased
-        self.infection_time = None
+        self.infection_time = 0
 
 
     def infect(self):
@@ -253,7 +258,7 @@ class BiologicalAgent(FocusedAgent):
 
 
     def is_contagious(self) -> bool:
-        return self.disease_status in (sir.INCUBATING_CONTAGIOUS, sir.INFECTED)
+        return self.disease_status in (sir.INCUBATING_CONTAGIOUS, sir.SYMPTOMATIC)
 
 class Rotation:
     """
