@@ -7,6 +7,7 @@ from pygame.locals import *
 import random
 
 from simulation_parameters import *
+from sir import SIR_status as sir
 
 # Colour values
 BLACK = (0,0,0)
@@ -18,11 +19,16 @@ ORANGE = (255,128,0)
 YELLOW = (255, 255, 0)
 PURPLE = (255, 0, 255)
 
-AGENT_COLOR = RED
 HOME_COLOR = GREEN
 WORK_COLOR = BLUE
-INFECTED_COLOR = ORANGE
-RECOVERED_COLOR = YELLOW
+
+agent_colors = {
+    sir.SUSCEPTIBLE: YELLOW,
+    sir.INCUBATING_SAFE: ORANGE,
+    sir.INCUBATING_CONTAGIOUS: RED,
+    sir.SYMPTOMATIC: RED,
+    sir.RECOVERED: PURPLE
+}
 
 # Window properties
 # Maximum window resolution
@@ -33,8 +39,8 @@ WINDOW_RES_HORIZ = 1920
 WINDOW_RES_VERT = 1080
 
 # Number of cells in the environment
-WORLD_WIDTH = 50
-WORLD_HEIGHT = 50
+WORLD_WIDTH = 30
+WORLD_HEIGHT = 30
 
 # Size of each cell, in pixels
 BLOCK_SIZE = 200
@@ -132,13 +138,8 @@ def draw_view(env):
     # Get list of agents and display them all
     for a in env.agents:
         x, y = a.pos.tolist()
-        if a.is_susceptible():
-            draw_square(x, y, AGENT_COLOR)
-        elif a.is_infected():
-            draw_square(x, y, INFECTED_COLOR)
-        else:
-            draw_square(x, y, RECOVERED_COLOR)
-
+        color = agent_colors[a.disease_status]
+        draw_square(x, y, color)
     pygame.display.update()
 
 
