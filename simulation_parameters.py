@@ -1,4 +1,8 @@
+# World parameters
 NUM_AGENTS = 40
+# Number of cells in the environment
+WORLD_WIDTH = 30
+WORLD_HEIGHT = 30
 
 # Infection parameters
 INITIAL_INFECTED_PERCENT = 0.02

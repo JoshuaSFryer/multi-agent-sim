@@ -38,10 +38,6 @@ MAX_RES_VERT = 1080
 WINDOW_RES_HORIZ = 1920
 WINDOW_RES_VERT = 1080
 
-# Number of cells in the environment
-WORLD_WIDTH = 30
-WORLD_HEIGHT = 30
-
 # Size of each cell, in pixels
 BLOCK_SIZE = 200
 BLOCK_SIZE_MIN = 1
