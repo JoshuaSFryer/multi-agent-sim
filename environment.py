@@ -77,6 +77,20 @@ class Environment:
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
 
+    def add_traceable_agent(self, home_point:np.array, work_point:np.array) -> None:
+        """
+        Spawn in a BiologicalAgent
+
+        home_point: Coordinate pair of the agent's home point
+        work_point: Coordinate pair of the agent's work point
+        """
+
+        # Agent spawns at home, default focus is work
+        x, y = home_point.tolist()
+        new_agent = TraceableAgent(self, x, y, home_point, work_point, 10)
+        self.add_object(new_agent, x, y)
+        self.agents.append(new_agent)
+
 
     def add_object(self, obj:Object, x:int, y:int) -> None:
         """
@@ -144,7 +158,7 @@ class Environment:
             # Find all nearby agents and register contact
             nearby_agents = self.localized_search(agent, INFECTION_RADIUS)
             for n in nearby_agents:
-                agent.contacts.add(n.ID)
+                agent.register_contact(self.current_time, n.agent_id)
 
             if agent.is_infected():
                 # If the agent is contagious, roll to infect nearby agents.
@@ -199,7 +213,7 @@ class Environment:
             agent.infect()
         except ValueError:
             # The agent could not be infected (already infected, or immune).
-            print(f'Could not infect agent {agent.ID}')
+            print(f'Could not infect agent {agent.agent_id}')
             return
 
 
