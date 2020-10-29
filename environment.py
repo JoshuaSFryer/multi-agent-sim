@@ -146,11 +146,10 @@ class Environment:
 
         # Advance clock by one minute
         self.current_time += 1
-        if self.current_time >= MINUTES_PER_DAY:
-            self.current_time = 0
+
         # Upon day/night transition every 1440/2 = 720 steps (720 min = 12 hrs),
         # have agents shift from work to home or vice versa.
-        if self.current_time == 0 or self.current_time == int(MINUTES_PER_DAY/2):
+        if self.current_time % int(MINUTES_PER_DAY/2) == 0:
             for agent in self.agents:
                 agent.toggle_focus()
 
