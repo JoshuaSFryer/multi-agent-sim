@@ -1,5 +1,6 @@
 # World parameters
 NUM_AGENTS = 40
+AGENT_SLACK = 7
 # Number of cells in the environment
 WORLD_WIDTH = 30
 WORLD_HEIGHT = 30

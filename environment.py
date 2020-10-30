@@ -58,7 +58,7 @@ class Environment:
 
         # Agent spawns at home, default focus is work
         x, y = home_point.tolist()
-        new_agent = FocusedAgent(self, x, y, home_point, work_point, 10)
+        new_agent = FocusedAgent(self, x, y, home_point, work_point, AGENT_SLACK)
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
 
@@ -70,10 +70,10 @@ class Environment:
         home_point: Coordinate pair of the agent's home point
         work_point: Coordinate pair of the agent's work point
         """
-
+        # TODO: deal with duplication of agent spawning methods
         # Agent spawns at home, default focus is work
         x, y = home_point.tolist()
-        new_agent = BiologicalAgent(self, x, y, home_point, work_point, 10)
+        new_agent = BiologicalAgent(self, x, y, home_point, work_point, AGENT_SLACK)
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
 
