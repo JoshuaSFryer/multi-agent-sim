@@ -7,6 +7,7 @@ their own logic.
 from agent import *
 from cell import Cell
 from objects import *
+from simulation_parameters import *
 
 MAXIMUM_MOVEMENT_ATTEMPTS = 20
 MINUTES_PER_DAY = 1440
@@ -19,7 +20,6 @@ class Environment:
 
         self.cells = list() # 2D list, forming a grid
         self.agents = list()
-        self.infected_agents = list()
         self.home_points = list()
         self.work_points = list()
 
@@ -77,6 +77,20 @@ class Environment:
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
 
+    def add_traceable_agent(self, home_point:np.array, work_point:np.array) -> None:
+        """
+        Spawn in a BiologicalAgent
+
+        home_point: Coordinate pair of the agent's home point
+        work_point: Coordinate pair of the agent's work point
+        """
+
+        # Agent spawns at home, default focus is work
+        x, y = home_point.tolist()
+        new_agent = TraceableAgent(self, x, y, home_point, work_point, 10)
+        self.add_object(new_agent, x, y)
+        self.agents.append(new_agent)
+
 
     def add_object(self, obj:Object, x:int, y:int) -> None:
         """
@@ -118,7 +132,7 @@ class Environment:
         """
 
         x, y = obj.pos.tolist()
-        self.cells[y][x].remove_object(obj)
+        self.cells[y][x].remove_object()
         obj.old_pos = np.array([x, y])
         obj.pos = np.array([new_x, new_y])
         self.cells[new_y][new_x].add_object(obj)
@@ -132,34 +146,30 @@ class Environment:
 
         # Advance clock by one minute
         self.current_time += 1
-        if self.current_time >= MINUTES_PER_DAY:
-            self.current_time = 0
+
         # Upon day/night transition every 1440/2 = 720 steps (720 min = 12 hrs),
         # have agents shift from work to home or vice versa.
-        if self.current_time == 0 or self.current_time == int(MINUTES_PER_DAY/2):
+        if self.current_time % int(MINUTES_PER_DAY/2) == 0:
             for agent in self.agents:
                 agent.toggle_focus()
 
-        # Check for infections
-        for inf in self.infected_agents:
-            if inf.is_infected():
-                inf.progress_infection()
-            else:
-                self.infected_agents.remove(inf)
-
-            # Check for disease spread
-            # TODO: Optimize this to only do a local search somehow.
-            for agent in self.agents:
-                if not (agent is inf):
-                    displacement = agent.pos - inf.pos
-                    if agent.get_distance(displacement) <= INFECTION_RADIUS:
-                        try:
-                            if random.random() >= INFECTION_PROBABILITY:
-                                self.infect_agent(agent)
-                        except ValueError:
-                            pass
-
         for agent in self.agents:
+            # Find all nearby agents and register contact
+            nearby_agents = self.localized_search(agent, INFECTION_RADIUS)
+            for n in nearby_agents:
+                agent.register_contact(self.current_time, n.agent_id)
+
+            if agent.is_infected():
+                # If the agent is contagious, roll to infect nearby agents.
+                if agent.is_contagious():
+                    for n in nearby_agents:
+                        roll = random.random()
+                        if roll <= INFECTION_PROBABILITY and n.is_susceptible():
+                            self.infect_agent(n)
+
+                # Also progress the agent's infection.
+                agent.progress_infection()
+
             # Generate a move repeatedly until a valid one is found
             attempts = 0 # Number of times we've tried to find a legal move
             while True: # I miss do-while loops
@@ -176,7 +186,6 @@ class Environment:
                     break
             # Execute the move
             self.move_object(agent, new_x, new_y)
-                    
 
     def validate_move(self, x:int, y:int) -> bool:
         """
@@ -197,13 +206,15 @@ class Environment:
 
         return True
     
+
     def infect_agent(self, agent:BiologicalAgent):
         try:
             agent.infect()
         except ValueError:
             # The agent could not be infected (already infected, or immune).
+            print(f'Could not infect agent {agent.agent_id}')
             return
-        self.infected_agents.append(agent)
+
 
     def recover_agent(self, agent:BiologicalAgent):
         try:
@@ -211,4 +222,27 @@ class Environment:
         except ValueError:
             # The agent could not be cured (it wasn't infected).
             return
-        self.infected_agents.remove(agent)  
+
+    
+    def localized_search(self, agent:Agent, radius:int):
+        """
+        Return a list of all Agents in the vicinity of a given Agent
+        (i.e. within <radius> tiles, counting diagonals as 1).
+        """
+        x, y = agent.pos.tolist()
+        # Get bounds of the search area, accounting for edges of the map
+        min_x = max(0, x - radius)
+        max_x = min(x + radius, self.canvas_size_x-1)
+        min_y = max(0, y - radius)
+        max_y = min(y + radius, self.canvas_size_y-1)
+
+        local_agents = list()
+
+        for i in range(min_x, max_x):
+            for j in range(min_y, max_y):
+                    cell = self.cells[j][i]
+                    if cell.is_occupied():
+                        if not cell.object is agent:
+                            local_agents.append(cell.object)
+
+        return local_agents

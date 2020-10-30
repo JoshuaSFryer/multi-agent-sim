@@ -1,6 +1,8 @@
 import numpy as np
 import random
+import uuid
 
+from contact import Contact
 from objects import Object
 from direction import Direction
 from simulation_parameters import *
@@ -17,7 +19,6 @@ class Agent(Object):
 
     def __init__(self, parent, x:int, y:int):
         super().__init__(parent, x, y)
-
 
     def get_movement(self) -> np.array:
         """
@@ -199,7 +200,7 @@ class BiologicalAgent(FocusedAgent):
 
         super().__init__(parent, x, y, home, work, slack)
         self.disease_status = diseased
-        self.infection_time = None
+        self.infection_time = 0
 
 
     def infect(self):
@@ -253,8 +254,23 @@ class BiologicalAgent(FocusedAgent):
 
 
     def is_contagious(self) -> bool:
-        return self.disease_status in (sir.INCUBATING_CONTAGIOUS, sir.INFECTED)
+        return self.disease_status in (sir.INCUBATING_CONTAGIOUS, sir.SYMPTOMATIC)
 
+
+class TraceableAgent(BiologicalAgent):
+
+    def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
+                    slack:int, diseased=sir.SUSCEPTIBLE):
+
+        super().__init__(parent, x, y, home, work, slack, diseased)
+        # Unique ID to track each agent
+        self.agent_id = uuid.uuid4()
+        # List of contacts with other agents
+        self.contacts = list()
+
+    def register_contact(self, time, id):
+        self.contacts.append(Contact(time, id))
+        
 class Rotation:
     """
     Transformation matrices; multiply a vector by one of these matrices to

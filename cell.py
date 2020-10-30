@@ -2,14 +2,12 @@ from floor import Floor
 from objects import Object
 """
 Cells are individual spaces that compose an environment.
-They have a floor, and should not contain more than one object at a time
-(though this is currently not strictly enforced).
+They may not contain more than one object at a time.
 """
 class Cell:
-    def __init__(self, floor=Floor.TILE):
-        self.floorType = floor # Has no effect currently. May in the future.
-        # List of objects placed in this cell
-        self.objects = list()
+    def __init__(self):
+        # Object placed in this cell
+        self.object = None
 
     # def __repr__(self):
     #     if not self.objects:
@@ -26,20 +24,23 @@ class Cell:
         obj: Object to place in this cell
         """
 
-        self.objects.append(obj)
+        if not self.is_occupied():
+            self.object = obj
+        else:
+            raise RuntimeError('Cell is already occupied')
     
-    def remove_object(self, obj:Object):
+    def remove_object(self):
         """
         Remove an object from this cell.
 
         obj: Object to remove from this cell
         """
 
-        self.objects.remove(obj)
+        self.object = None
 
     def is_occupied(self) -> bool:
         """
         Check whether there are any objects placed in this cell.
         """
 
-        return len(self.objects) > 0
+        return not(self.object is None)
