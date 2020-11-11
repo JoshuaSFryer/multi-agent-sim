@@ -256,6 +256,10 @@ class BiologicalAgent(FocusedAgent):
     def is_contagious(self) -> bool:
         return self.disease_status in (sir.INCUBATING_CONTAGIOUS, sir.SYMPTOMATIC)
 
+    
+    def is_symptomatic(self) -> bool:
+        return self.disease_status == sir.SYMPTOMATIC
+
 
 class TraceableAgent(BiologicalAgent):
 
@@ -267,9 +271,73 @@ class TraceableAgent(BiologicalAgent):
         self.agent_id = uuid.uuid4()
         # List of contacts with other agents
         self.contacts = list()
+        # True if agent is self-isolating
+        self.isolating = False
+
 
     def register_contact(self, time, id):
+        """
+        Record a contact with another agent at a particular time.
+        """
+        
         self.contacts.append(Contact(time, id))
+
+
+    def self_isolate(self):
+        self.isolating = True
+        self.focus_point = self.home_point
+
+    
+    def stop_isolating(self):
+        self.isolating = False
+
+    
+    def toggle_focus(self):
+        """
+        Overrides FocusedAgent.toggle_focus(), disabling normal focus-toggling
+        when the agent is self-isolating and should remain at home.
+        """
+
+        if not self.isolating:
+            super().toggle_focus()
+
+    
+    def progress_infection(self):
+        """
+        Overrides BiologicalAgent.progress_infection().
+        Agents will now begin self-isolating upon becoming symptomatic.
+
+        QUESTIONABLE: Currently, the isolation begins the same minute as the 
+        symptoms show, might want it to start on the next tick instead). 
+        """
+        super().progress_infection()
+
+        if not RESPONSE_MODE == SimulationMode.NO_REACTION:
+            if self.is_symptomatic() and not self.isolating:
+                self.self_isolate()
+            elif self.disease_status == sir.RECOVERED:
+                self.stop_isolating()
+                if self.parent.daytime:
+                    self.focus_point = self.work_point
+                # else, focus should be home_point, which it ought to be if the 
+                # agent was isolating, but here's the code just in case
+                else:
+                    self.focus_point = self.home_point
+        
+
+    def get_contacted_agents(self, expiry:int):
+        """
+        Get all the unique agents that this agent has come into contact with,
+        in the past {expiry} ticks.
+        """
+
+        contact_list = set()
+        for c in self.contacts:
+            time_delta = self.parent.current_time - c.time
+            if time_delta <= expiry:
+                contact_list.add(c)
+        return contact_list
+
         
 class Rotation:
     """

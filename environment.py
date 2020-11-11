@@ -26,6 +26,9 @@ class Environment:
         # Current "simulation time", in minutes. One tick advances this clock
         # by one minute. Wraps around at 1440 minutes (i.e. every 24 hours).
         self.current_time = 0
+        # True for 'daytime', people working. False for 'nighttime', people 
+        # going home.
+        self.daytime = True
 
         # Build and populate a grid of Cells
         for y in range(self.canvas_size_y):
@@ -150,6 +153,7 @@ class Environment:
         # Upon day/night transition every 1440/2 = 720 steps (720 min = 12 hrs),
         # have agents shift from work to home or vice versa.
         if self.current_time % int(MINUTES_PER_DAY/2) == 0:
+            self.daytime = not self.daytime
             for agent in self.agents:
                 agent.toggle_focus()
 
@@ -246,3 +250,9 @@ class Environment:
                             local_agents.append(cell.object)
 
         return local_agents
+
+    
+    def current_focus(self):
+        """
+        Determine whether 
+        """
