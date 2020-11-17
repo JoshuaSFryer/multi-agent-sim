@@ -6,6 +6,7 @@ their own logic.
 """
 from agent import *
 from cell import Cell
+from logger import *
 from objects import *
 from simulation_parameters import *
 
@@ -22,6 +23,13 @@ class Environment:
         self.agents = list()
         self.home_points = list()
         self.work_points = list()
+
+        # Logger that tracks the counts of susceptible, infected, and recovered
+        # agents
+        self.logger = Logger()
+        self.susceptible_agents = set()
+        self.infected_agents = set()
+        self.recovered_agents = set()
 
         # Current "simulation time", in minutes. One tick advances this clock
         # by one minute. Wraps around at 1440 minutes (i.e. every 24 hours).
@@ -147,6 +155,28 @@ class Environment:
         and allowing Agents to take actions.
         """
 
+        # Log current state
+        # HACK: Iterating over all agents is awful but right now we care about
+        #       results and not how efficiently we get them. At some point when
+        #       there is no looming deadline, should refactor to perhaps sets
+        #       tracking which agents are in which category, updated only when
+        #       they change status (e.g. get a return from progress_infection)
+        susceptible_count = 0
+        infected_count = 0
+        recovered_count = 0
+        for agent in self.agents:
+            if agent.is_susceptible():
+                susceptible_count += 1
+            elif agent.is_infected():
+                infected_count += 1
+            elif agent.is_recovered():
+                recovered_count += 1
+            else:
+                raise ValueError("Agent has an invalid status")
+        self.logger.add_entry(self.current_time, susceptible_count,
+                                infected_count, recovered_count)
+
+        self.logger.print_last()             
         # Advance clock by one minute
         self.current_time += 1
 
@@ -172,7 +202,8 @@ class Environment:
                             self.infect_agent(n)
 
                 # Also progress the agent's infection.
-                agent.progress_infection()
+                agent_status = agent.progress_infection()
+
 
             # Generate a move repeatedly until a valid one is found
             attempts = 0 # Number of times we've tried to find a legal move
@@ -252,7 +283,12 @@ class Environment:
         return local_agents
 
     
-    def current_focus(self):
+    def num_infected(self):
         """
-        Determine whether 
+        HACK: return number of infected agents
         """
+        count = 0
+        for a in self.agents:
+            if a.is_infected():
+                count += 1
+        return count

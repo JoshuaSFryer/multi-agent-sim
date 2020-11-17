@@ -260,6 +260,10 @@ class BiologicalAgent(FocusedAgent):
     def is_symptomatic(self) -> bool:
         return self.disease_status == sir.SYMPTOMATIC
 
+    
+    def is_recovered(self) -> bool:
+        return self.disease_status == sir.RECOVERED
+
 
 class TraceableAgent(BiologicalAgent):
 
