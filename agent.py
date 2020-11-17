@@ -237,6 +237,12 @@ class BiologicalAgent(FocusedAgent):
         elif self.disease_status == sir.SYMPTOMATIC:
             if self.infection_time >= SYMPTOMATIC_TIME:
                 self.disease_status = sir.RECOVERED
+                self.infection_time = 0
+
+        elif self.disease_status == sir.RECOVERED:
+            if self.infection_time >= IMMUNITY_DURATION:
+                self.disease_status = sir.SUSCEPTIBLE
+                self.infection_time = 0
 
         else:
             raise RuntimeError("progress_infection() called on uninfected agent")
@@ -263,6 +269,11 @@ class BiologicalAgent(FocusedAgent):
     
     def is_recovered(self) -> bool:
         return self.disease_status == sir.RECOVERED
+
+
+    def lose_immunity(self):
+        if self.disease_status == sir.RECOVERED:
+            self.disease_status = sir.SUSCEPTIBLE
 
 
 class TraceableAgent(BiologicalAgent):
