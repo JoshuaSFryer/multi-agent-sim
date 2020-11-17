@@ -97,7 +97,8 @@ def main():
 
             elif event.type == TICK_EVENT:
                 # Tick simulation forward
-                env.tick()
+                if not env.complete:
+                    env.tick()
 
             # Update the display
             draw_view(env)

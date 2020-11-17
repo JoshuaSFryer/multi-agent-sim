@@ -16,6 +16,9 @@ MINUTES_PER_DAY = 1440
 class Environment:
 
     def __init__(self, width:int, height:int):
+        # Flag for end of simulation
+        self.complete = False
+
         self.canvas_size_x = width
         self.canvas_size_y = height
 
@@ -179,6 +182,9 @@ class Environment:
         self.logger.print_last()             
         # Advance clock by one minute
         self.current_time += 1
+        if self.current_time > MAXIMUM_TIME:
+            self.end_simulation()
+            return
 
         # Upon day/night transition every 1440/2 = 720 steps (720 min = 12 hrs),
         # have agents shift from work to home or vice versa.
@@ -292,3 +298,8 @@ class Environment:
             if a.is_infected():
                 count += 1
         return count
+
+    
+    def end_simulation(self):
+        self.complete = True
+        self.logger.save_to_file()
