@@ -30,6 +30,7 @@ class Environment:
         # Logger that tracks the counts of susceptible, infected, and recovered
         # agents
         self.logger = Logger()
+        self.logger.create_log_file()
         self.susceptible_agents = set()
         self.infected_agents = set()
         self.recovered_agents = set()
@@ -176,10 +177,9 @@ class Environment:
                 recovered_count += 1
             else:
                 raise ValueError("Agent has an invalid status")
-        self.logger.add_entry(self.current_time, susceptible_count,
-                                infected_count, recovered_count)
-
-        self.logger.print_last()             
+        self.logger.log_line(LogEntry(self.current_time, susceptible_count,
+                                infected_count, recovered_count))
+           
         # Advance clock by one minute
         self.current_time += 1
         if self.current_time > MAXIMUM_TIME:
@@ -305,4 +305,3 @@ class Environment:
     
     def end_simulation(self):
         self.complete = True
-        self.logger.save_to_file()

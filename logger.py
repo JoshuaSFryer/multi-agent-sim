@@ -1,22 +1,21 @@
-
+from datetime import datetime
+import os
 class Logger:
     def __init__(self):
-        self.entries = list()
+        self.filename = None
+        os.makedirs('log', exist_ok=True)
 
-    def add_entry(self, time, s, i, r):
-        self.entries.append(LogEntry(time, s, i, r))
-        
-    def print_last(self):
-        last = self.entries[-1]
-        print(str(last))
+    def create_log_file(self):
+        time = datetime.now()
+        timestamp = time.strftime('%Y-%m-%d_%H:%M:%S')
+        self.filename = os.path.join('log',timestamp + '.csv')
 
-    def save_to_file(self):
-        f = open('log.csv', 'w')
-        for entry in self.entries:
+    def log_line(self, entry):
+        with open(self.filename, 'a') as f:
             string = ','.join((str(entry.time), str(entry.susceptible),
-                                str(entry.infected), str(entry.recovered)))
+                                    str(entry.infected), str(entry.recovered)))
             f.write(string+'\n')
-        f.close()
+            print(str(entry))
 
 
 class LogEntry:
