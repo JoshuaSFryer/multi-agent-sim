@@ -8,6 +8,7 @@ from agent import *
 from cell import Cell
 from logger import *
 from objects import *
+from plotter import Plotter
 from simulation_parameters import *
 
 MAXIMUM_MOVEMENT_ATTEMPTS = 20
@@ -305,3 +306,6 @@ class Environment:
     
     def end_simulation(self):
         self.complete = True
+        path = self.logger.filename
+        p = Plotter(path)
+
