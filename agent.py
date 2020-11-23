@@ -290,12 +290,16 @@ class TraceableAgent(BiologicalAgent):
         self.isolating = False
 
 
-    def register_contact(self, time, id):
+    def register_contact(self, time, contacted_agent):
         """
         Record a contact with another agent at a particular time.
         """
         
-        self.contacts.append(Contact(time, id))
+        self.contacts.append(Contact(time, 
+                                    self.pos,
+                                    contacted_agent.agent_id,
+                                    contacted_agent.is_symptomatic()
+                                    ))
 
 
     def self_isolate(self):

@@ -198,7 +198,7 @@ class Environment:
             # Find all nearby agents and register contact
             nearby_agents = self.localized_search(agent, INFECTION_RADIUS)
             for n in nearby_agents:
-                agent.register_contact(self.current_time, n.agent_id)
+                agent.register_contact(self.current_time, n)
 
             if agent.is_infected():
                 # If the agent is contagious, roll to infect nearby agents.
