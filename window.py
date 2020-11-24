@@ -166,7 +166,7 @@ def spawn_agent(env):
     env.home_points.append(home_point)
     env.work_points.append(work_point)
     # env.add_focused_agent(home_point, work_point)
-    env.add_traceable_agent(home_point, work_point)
+    env.add_agent(home_point, work_point)
 
 # def zoom_in():
 #     global BLOCK_SIZE, screen

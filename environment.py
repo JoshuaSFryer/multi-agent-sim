@@ -51,49 +51,7 @@ class Environment:
             self.cells.append(row)
 
 
-    def add_meandering_agent(self, spawn_point:np.array) -> None:
-        """
-        Spawn in a MeanderingAgent.
-
-        spawn_point:    Coordinate pair to spawn the agent at
-        """
-        
-        x, y = spawn_point.tolist()
-        new_agent = MeanderingAgent(self, x, y)
-        self.add_object(new_agent, x, y)
-        self.agents.append(new_agent)
-
-
-    def add_focused_agent(self, home_point:np.array, work_point:np.array) -> None:
-        """
-        Spawn in a FocusedAgent.
-
-        home_point: Coordinate pair of the agent's home point
-        work_point: Coordinate pair of the agent's work point
-        """
-
-        # Agent spawns at home, default focus is work
-        x, y = home_point.tolist()
-        new_agent = FocusedAgent(self, x, y, home_point, work_point, AGENT_SLACK)
-        self.add_object(new_agent, x, y)
-        self.agents.append(new_agent)
-
-
-    def add_bio_agent(self, home_point:np.array, work_point:np.array) -> None:
-        """
-        Spawn in a BiologicalAgent
-
-        home_point: Coordinate pair of the agent's home point
-        work_point: Coordinate pair of the agent's work point
-        """
-        # TODO: deal with duplication of agent spawning methods
-        # Agent spawns at home, default focus is work
-        x, y = home_point.tolist()
-        new_agent = BiologicalAgent(self, x, y, home_point, work_point, AGENT_SLACK)
-        self.add_object(new_agent, x, y)
-        self.agents.append(new_agent)
-
-    def add_traceable_agent(self, home_point:np.array, work_point:np.array) -> None:
+    def add_agent(self, home_point:np.array, work_point:np.array) -> None:
         """
         Spawn in a BiologicalAgent
 
