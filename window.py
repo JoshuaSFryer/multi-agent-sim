@@ -50,7 +50,7 @@ while (too_wide or too_tall) and BLOCK_SIZE > BLOCK_SIZE_MIN:
     too_tall = BLOCK_SIZE * WORLD_HEIGHT > MAX_RES_VERT
 
 
-TICK_DELAY = 500
+TICK_DELAY = 10
 
 FPS_CLOCK = pygame.time.Clock()
 
