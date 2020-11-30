@@ -1,0 +1,24 @@
+@startuml agent-sim-diagram
+
+
+Object <|-- Agent
+
+Agent <|-- FocusedAgent
+FocusedAgent <|-- BiologicalAgent
+BiologicalAgent <|-- TraceableAgent
+
+
+
+class Environment {
+    current_time:int
+    daytime:bool
+
+    tick()
+    add_agent()
+}
+Window -- Environment : displays
+Environment *-- Agent
+Environment o-- Logger
+
+
+@enduml

@@ -1,0 +1,32 @@
+@startuml Mode_3_Contact_Tracing
+
+state Agent {
+    [*] --> Idle
+    note left of Idle
+        Shift between home
+        and work points
+        every 12 hours
+    end note
+    Idle --> AwaitingTest : Become symptomatic
+    Idle --> CautiousIsolating : num of symptomatic contacts\nexceeds threshold
+    AwaitingTest --> SelfIsolating : testing delay expires
+    SelfIsolating --> Idle : recover
+    SelfIsolating : notify_contacts()
+    CautiousIsolating --> Idle : Incubation period expires
+    CautiousIsolating : notify_region()
+}
+    
+state Infection {
+    [*] --> Susceptible
+    Susceptible --> Incubating : infect()
+    Incubating : advance_infection()
+    Incubating --> Contagious : advance_infection()
+    Contagious : advance_infection()
+    Contagious --> Symptomatic : advance_infection()
+    Symptomatic : advance_infection()
+    Symptomatic --> Recovered : advance_infection()
+    Recovered: lose_imminuty()
+    Recovered --> Susceptible : immunity expires
+}
+
+@enduml

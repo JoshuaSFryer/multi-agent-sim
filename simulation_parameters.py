@@ -2,7 +2,7 @@ from enum import Enum
 class SimulationMode(Enum):
     NO_REACTION = 1
     CONTACT_TRACING = 2
-    UNDEFINED_MODE = 3
+    GEO_NOTIFICATION = 3
 
 # World parameters
 NUM_AGENTS = 20
@@ -28,5 +28,5 @@ INFECTION_PROBABILITY = 1
 
 # Agent behaviour parameters
 RESPONSE_MODE = SimulationMode.CONTACT_TRACING
-# How long the agents wait to get tested after becoming symptomatic
+# How long the agents wait to "get tested" after becoming symptomatic
 SYMPTOM_TESTING_LAG = 3
