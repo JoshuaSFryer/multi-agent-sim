@@ -166,10 +166,8 @@ class Environment:
                         if roll <= INFECTION_PROBABILITY and n.is_susceptible():
                             self.infect_agent(n)
 
-                # Also progress the agent's infection, for any agent that is
-                # infected, or that is recovered (immunity starts to wear off, 
-                # eventually the agent is susceptible again).
-                agent.tick()
+            # Update the agent's state
+            agent.tick()
 
 
             # Generate a move repeatedly until a valid one is found

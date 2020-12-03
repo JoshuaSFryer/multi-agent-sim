@@ -216,7 +216,7 @@ class BiologicalAgent(FocusedAgent):
 
     def tick(self):
         """
-        Tick the infection's timer forward once.
+        Update the agent for the current step.
         """
         
         self.infection.tick()
@@ -242,6 +242,13 @@ class BiologicalAgent(FocusedAgent):
         return self.infection.status == sir.RECOVERED
 
 
+class BehaviorState(Enum):
+    IDLE = 1
+    AWAITING_TEST = 2
+    SELF_ISOLATING = 3
+    CAUTIOUS_ISOLATING = 4
+
+
 class TraceableAgent(BiologicalAgent):
 
     def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
@@ -253,7 +260,10 @@ class TraceableAgent(BiologicalAgent):
         # List of contacts with other agents
         self.contacts = list()
         # True if agent is self-isolating
-        self.isolating = False
+        # self.isolating = False
+        self.behavior = BehaviorState.IDLE
+        self.testing_timer = 0
+        self.caution_timer = 0
 
 
     def register_contact(self, time, contacted_agent):
@@ -269,12 +279,26 @@ class TraceableAgent(BiologicalAgent):
 
 
     def self_isolate(self):
-        self.isolating = True
+        # self.isolating = True
+        self.behavior = BehaviorState.SELF_ISOLATING
         self.focus_point = self.home_point
+    
+
+    def provisional_isolate(self):
+        self.behavior = BehaviorState.CAUTIOUS_ISOLATING
+        self.caution_timer = INCUBATION_SAFE_TIME + INCUBATION_CONTAGIOUS_TIME
 
     
     def stop_isolating(self):
-        self.isolating = False
+        # self.isolating = False
+        self.behavior = BehaviorState.IDLE
+        # Have the agent sync back up with the day/night cycle
+        if self.parent.daytime:
+            self.focus_point = self.work_point
+        # else, it's night and so focus should be home_point, which it ought to 
+        # be if the agent was isolating, but here's the code just in case
+        else:
+            self.focus_point = self.home_point
 
     
     def toggle_focus(self):
@@ -283,7 +307,7 @@ class TraceableAgent(BiologicalAgent):
         when the agent is self-isolating and should remain at home.
         """
 
-        if not self.isolating:
+        if not self.is_isolating():
             super().toggle_focus()
 
     
@@ -291,23 +315,34 @@ class TraceableAgent(BiologicalAgent):
         """
         Overrides BiologicalAgent.tick().
         Agents will now begin self-isolating upon becoming symptomatic.
-
-        QUESTIONABLE: Currently, the isolation begins the same minute as the 
-        symptoms show, might want it to start on the next tick instead). 
         """
+        # Tick the infection forward
         super().tick()
 
-        if not RESPONSE_MODE == SimulationMode.NO_REACTION:
-            if self.is_symptomatic() and not self.isolating:
+        if self.behavior == BehaviorState.AWAITING_TEST:
+            self.testing_timer -= 1
+            if self.testing_timer <= 0:
                 self.self_isolate()
-            elif self.is_recovered():
+
+        elif self.behavior == BehaviorState.CAUTIOUS_ISOLATING:
+            self.caution_timer -= 1
+            if self.caution_timer <= 0:
                 self.stop_isolating()
-                if self.parent.daytime:
-                    self.focus_point = self.work_point
-                # else, focus should be home_point, which it ought to be if the 
-                # agent was isolating, but here's the code just in case
-                else:
-                    self.focus_point = self.home_point
+
+        elif self.behavior == BehaviorState.SELF_ISOLATING:
+            if self.is_recovered():
+                self.stop_isolating()
+
+        elif self.behavior == BehaviorState.IDLE:
+            if self.is_symptomatic():
+                self.self_isolate()
+        
+        # if not RESPONSE_MODE == SimulationMode.NO_REACTION:
+        #     if self.is_symptomatic() and not self.isolating:
+        #         self.self_isolate()
+        #     elif self.is_recovered():
+        #         self.stop_isolating()
+                
         
 
     def get_contacted_agents(self, expiry:int):
@@ -322,6 +357,15 @@ class TraceableAgent(BiologicalAgent):
             if time_delta <= expiry:
                 contact_list.add(c)
         return contact_list
+
+
+    def wait_for_test(self):
+        self.testing_timer = SYMPTOM_TESTING_LAG
+        self.behavior = BehaviorState.AWAITING_TEST
+
+    
+    def is_isolating(self):
+        return self.behavior in (BehaviorState.SELF_ISOLATING, BehaviorState.CAUTIOUS_ISOLATING)
 
         
 class Rotation:
