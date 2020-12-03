@@ -135,7 +135,7 @@ def draw_view(env):
     # Get list of agents and display them all
     for a in env.agents:
         x, y = a.pos.tolist()
-        color = agent_colors[a.disease_status]
+        color = agent_colors[a.infection.status]
         draw_square(x, y, color)
     pygame.display.update()
 

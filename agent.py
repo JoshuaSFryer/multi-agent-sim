@@ -5,6 +5,7 @@ import uuid
 from contact import Contact
 from objects import Object
 from direction import Direction
+from infection import Infection
 from simulation_parameters import *
 from sir import SIR_status as sir
 
@@ -195,12 +196,11 @@ class BiologicalAgent(FocusedAgent):
                     current focus point 
         diseased:   SIR status for the agent upon creation. Most agents should
                     be created as susceptible, but this allows for seeding 
-                    an agent as infected.
+                    an agent as infected. (TODO: Deprecated)
         """
 
         super().__init__(parent, x, y, home, work, slack)
-        self.disease_status = diseased
-        self.infection_time = 0
+        self.infection = Infection()
 
 
     def infect(self):
@@ -208,72 +208,38 @@ class BiologicalAgent(FocusedAgent):
         Infect the agent with the disease, if it is susceptible.
         """
 
-        if self.disease_status == sir.SUSCEPTIBLE:
-            self.disease_status = sir.INCUBATING_SAFE
-            self.infection_time = 0
+        if not self.infection.active:
+            self.infection.activate()
         else:
-            raise ValueError("Cannot infect agent: \
-                            Agent is not susceptible to infection.")
+            pass
 
 
-    def progress_infection(self):
+    def tick(self):
         """
-        Advance the infection, ticking the infection timer forward and
-        progressing to the next state of infection if sufficient time has
-        passed.
+        Tick the infection's timer forward once.
         """
         
-        self.infection_time += 1
-        if self.disease_status == sir.INCUBATING_SAFE:
-            if self.infection_time >= INCUBATION_SAFE_TIME:
-                self.disease_status = sir.INCUBATING_CONTAGIOUS
-                self.infection_time = 0
-        
-        elif self.disease_status == sir.INCUBATING_CONTAGIOUS:
-            if self.infection_time >= INCUBATION_CONTAGIOUS_TIME:
-                self.disease_status = sir.SYMPTOMATIC
-                self.infection_time = 0
-        
-        elif self.disease_status == sir.SYMPTOMATIC:
-            if self.infection_time >= SYMPTOMATIC_TIME:
-                self.disease_status = sir.RECOVERED
-                self.infection_time = 0
-
-        elif self.disease_status == sir.RECOVERED:
-            if self.infection_time >= IMMUNITY_DURATION:
-                self.disease_status = sir.SUSCEPTIBLE
-                self.infection_time = 0
-
-        else:
-            raise RuntimeError("progress_infection() called on uninfected agent")
+        self.infection.tick()
 
 
     def is_infected(self) -> bool:
-        return self.disease_status in ( sir.INCUBATING_SAFE, 
-                                        sir.INCUBATING_CONTAGIOUS,
-                                        sir.SYMPTOMATIC
-                                        )
+        return self.infection.active
 
 
     def is_susceptible(self) -> bool:
-        return self.disease_status == sir.SUSCEPTIBLE
+        return self.infection.status == sir.SUSCEPTIBLE
 
 
     def is_contagious(self) -> bool:
-        return self.disease_status in (sir.INCUBATING_CONTAGIOUS, sir.SYMPTOMATIC)
+        return self.infection.status in (sir.INCUBATING_CONTAGIOUS, sir.SYMPTOMATIC)
 
     
     def is_symptomatic(self) -> bool:
-        return self.disease_status == sir.SYMPTOMATIC
+        return self.infection.status == sir.SYMPTOMATIC
 
     
     def is_recovered(self) -> bool:
-        return self.disease_status == sir.RECOVERED
-
-
-    def lose_immunity(self):
-        if self.disease_status == sir.RECOVERED:
-            self.disease_status = sir.SUSCEPTIBLE
+        return self.infection.status == sir.RECOVERED
 
 
 class TraceableAgent(BiologicalAgent):
@@ -321,20 +287,20 @@ class TraceableAgent(BiologicalAgent):
             super().toggle_focus()
 
     
-    def progress_infection(self):
+    def tick(self):
         """
-        Overrides BiologicalAgent.progress_infection().
+        Overrides BiologicalAgent.tick().
         Agents will now begin self-isolating upon becoming symptomatic.
 
         QUESTIONABLE: Currently, the isolation begins the same minute as the 
         symptoms show, might want it to start on the next tick instead). 
         """
-        super().progress_infection()
+        super().tick()
 
         if not RESPONSE_MODE == SimulationMode.NO_REACTION:
             if self.is_symptomatic() and not self.isolating:
                 self.self_isolate()
-            elif self.disease_status == sir.RECOVERED:
+            elif self.is_recovered():
                 self.stop_isolating()
                 if self.parent.daytime:
                     self.focus_point = self.work_point

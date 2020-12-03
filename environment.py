@@ -130,7 +130,7 @@ class Environment:
         for agent in self.agents:
             if agent.is_susceptible():
                 susceptible_count += 1
-            elif agent.is_infected():
+            elif agent.is_infected() and not agent.is_recovered():
                 infected_count += 1
             elif agent.is_recovered():
                 recovered_count += 1
@@ -166,11 +166,10 @@ class Environment:
                         if roll <= INFECTION_PROBABILITY and n.is_susceptible():
                             self.infect_agent(n)
 
-            # Also progress the agent's infection, for any agent that is
-            # infected, or that is recovered (immunity starts to wear off, 
-            # eventually the agent is susceptible again).
-            if not agent.is_susceptible():
-                agent.progress_infection()
+                # Also progress the agent's infection, for any agent that is
+                # infected, or that is recovered (immunity starts to wear off, 
+                # eventually the agent is susceptible again).
+                agent.tick()
 
 
             # Generate a move repeatedly until a valid one is found
