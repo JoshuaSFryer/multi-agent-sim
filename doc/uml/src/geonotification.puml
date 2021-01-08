@@ -1,19 +1,24 @@
 @startuml Mode_3_Contact_Tracing
 
 state Agent {
-    [*] --> Idle
+    [*] -down-> Idle
     note left of Idle
         Shift between home
         and work points
         every 12 hours
     end note
-    Idle --> AwaitingTest : Become symptomatic
-    Idle --> CautiousIsolating : num of symptomatic contacts\nexceeds threshold
-    AwaitingTest --> SelfIsolating : testing delay expires
-    SelfIsolating --> Idle : recover
-    SelfIsolating : notify_contacts()
-    CautiousIsolating --> Idle : Incubation period expires
+    Idle -down-> AwaitingTest : Become symptomatic
+    Idle -down-> AwaitingTest : num of symptomatic contacts\nexceeds threshold
+    state fork_state <<fork>>
+    AwaitingTest : notify_contacts()
+    AwaitingTest -down-> fork_state : testing delay expires
+    fork_state -down-> SelfIsolating : if isolating due to symptoms
+    fork_state -right-> CautiousIsolating : if isolation due to threshold
+    state join_state <<join>>
+    SelfIsolating --> join_state : recover
+    CautiousIsolating --> join_state : Incubation period expires
     CautiousIsolating : notify_region()
+    join_state --> Idle
 }
     
 state Infection {
