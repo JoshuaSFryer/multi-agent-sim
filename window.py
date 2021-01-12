@@ -18,6 +18,7 @@ GREEN = (0,255,0)
 ORANGE = (255,128,0)
 YELLOW = (255, 255, 0)
 PURPLE = (255, 0, 255)
+BLUE_GRAY = (70, 70, 80)
 
 HOME_COLOR = GREEN
 WORK_COLOR = BLUE
@@ -123,6 +124,11 @@ def draw_view(env):
     """
 
     clear_screen()
+
+    # Paint the background a dusky BLUE_GRAY colour at night
+    if not env.daytime:
+        global screen
+        screen.fill(BLUE_GRAY)
     
     for p in env.home_points:
         x, y = p.tolist()

@@ -9,14 +9,15 @@ state Agent {
     end note
     Idle -down-> AwaitingTest : Become symptomatic
     Idle -down-> AwaitingTest : num of symptomatic contacts\nexceeds threshold
-    state fork_state <<fork>>
+    state isolation_fork <<fork>>
     AwaitingTest : notify_contacts()
-    AwaitingTest -down-> fork_state : testing delay expires
-    fork_state -down-> SelfIsolating : if isolating due to symptoms
-    fork_state -right-> CautiousIsolating : if isolation due to threshold
+    AwaitingTest -down-> isolation_fork : testing delay expires
+    isolation_fork -down-> SelfIsolating : if isolating due to symptoms
+    isolation_fork -right-> CautiousIsolating : if isolation due to threshold
     state join_state <<join>>
     SelfIsolating --> join_state : recover
     CautiousIsolating --> join_state : Incubation period expires
+    CautiousIsolating --> SelfIsolating : symptoms develop
     CautiousIsolating : notify_region()
     join_state --> Idle
 }
