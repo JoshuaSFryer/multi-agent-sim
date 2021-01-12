@@ -57,6 +57,9 @@ FPS_CLOCK = pygame.time.Clock()
 
 screen = None
 
+if RNG_SEED is not None:
+    random.seed(RNG_SEED)
+
 def main():
     global screen, FPS_CLOCK
 

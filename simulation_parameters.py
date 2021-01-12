@@ -33,3 +33,6 @@ CAUTION_THRESHOLD = 5
 RESPONSE_MODE = SimulationMode.CONTACT_TRACING
 # How long the agents wait to "get tested" after becoming symptomatic
 SYMPTOM_TESTING_LAG = 3
+
+
+RNG_SEED = 5
