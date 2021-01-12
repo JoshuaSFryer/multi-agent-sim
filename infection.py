@@ -13,6 +13,11 @@ class Infection():
 
     
     def activate(self):
+        """
+        Cover the transition between SUSCEPTIBLE and INCUBATING_SAFE states,
+        i.e. trigger the infection in the agent.
+        """
+
         self.status = sir.INCUBATING_SAFE
         self.tick_threshold = INCUBATION_SAFE_TIME
         self.ticks = 0
@@ -42,7 +47,7 @@ class Infection():
 
         # Do nothing if there is no active infection!
         if self.status == sir.SUSCEPTIBLE:
-            pass
+            return
         
         # activate() covers the transition from SUSCEPTIBLE to INCUBATING_SAFE
 
@@ -60,6 +65,8 @@ class Infection():
             self.tick_threshold = IMMUNITY_DURATION
         # After the infection has subsided, the agent has a grace period where
         # it is immune to infection.
+        # After immunity elapses, the agent has no current infection but is
+        # once again susceptible to infection.
         elif self.status == sir.RECOVERED:
             self.status = sir.SUSCEPTIBLE
             self.tick_threshold = None

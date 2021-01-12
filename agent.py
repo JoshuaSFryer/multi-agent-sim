@@ -249,6 +249,11 @@ class BehaviorState(Enum):
     CAUTIOUS_ISOLATING = 4
 
 
+class TestingReason(Enum):
+    SYMPTOMS = 1
+    CONTACTS = 2
+
+
 class TraceableAgent(BiologicalAgent):
 
     def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
@@ -264,6 +269,7 @@ class TraceableAgent(BiologicalAgent):
         self.behavior = BehaviorState.IDLE
         self.testing_timer = 0
         self.caution_timer = 0
+        self.testing_reason = None
 
 
     def register_contact(self, time, contacted_agent):
@@ -279,13 +285,13 @@ class TraceableAgent(BiologicalAgent):
 
 
     def self_isolate(self):
-        # self.isolating = True
         self.behavior = BehaviorState.SELF_ISOLATING
         self.focus_point = self.home_point
     
 
     def provisional_isolate(self):
         self.behavior = BehaviorState.CAUTIOUS_ISOLATING
+        self.focus_point = self.home_point
         self.caution_timer = INCUBATION_SAFE_TIME + INCUBATION_CONTAGIOUS_TIME
 
     
@@ -316,33 +322,50 @@ class TraceableAgent(BiologicalAgent):
         Overrides BiologicalAgent.tick().
         Agents will now begin self-isolating upon becoming symptomatic.
         """
-        # Tick the infection forward
+        # Tick the infection forward (no effect if infection is inactive)
         super().tick()
 
-        if self.behavior == BehaviorState.AWAITING_TEST:
+        if self.behavior == BehaviorState.IDLE:
+            # Get tested if symptomatic
+            if self.is_symptomatic():
+                self.wait_for_test()
+                self.testing_reason = TestingReason.SYMPTOMS
+                self.notify_contacts()
+
+            # Get tested if number of symptomatic contacts exceeds threshold
+            if self.get_infected_contacts() > CAUTION_THRESHOLD:
+                self.wait_for_test()
+                self.testing_reason = TestingReason.CONTACTS
+                self.notify_contacts()
+
+        elif self.behavior == BehaviorState.AWAITING_TEST:
             self.testing_timer -= 1
             if self.testing_timer <= 0:
-                self.self_isolate()
+                # Go into self-isolation if test was prompted by symptoms
+                if self.testing_reason == TestingReason.SYMPTOMS:
+                    self.self_isolate()
+                    self.testing_reason = None
+                
+                # Go into a cautious self-isolation if test was prompted by 
+                # exposure to other agents who were symptomatic
+                elif self.testing_reason == TestingReason.CONTACTS:
+                    self.provisional_isolate()
+                    self.testing_reason = None
+
+        elif self.behavior == BehaviorState.SELF_ISOLATING:
+            # Go back to normal once the infection ends
+            if self.is_recovered:
+                self.stop_isolating()
 
         elif self.behavior == BehaviorState.CAUTIOUS_ISOLATING:
+            # Go into self-isolation if symptoms develop
+            if self.is_symptomatic():
+                self.self_isolate()
+            
+            # Go back to normal if the caution period expires
             self.caution_timer -= 1
             if self.caution_timer <= 0:
                 self.stop_isolating()
-
-        elif self.behavior == BehaviorState.SELF_ISOLATING:
-            if self.is_recovered():
-                self.stop_isolating()
-
-        elif self.behavior == BehaviorState.IDLE:
-            if self.is_symptomatic():
-                self.self_isolate()
-        
-        # if not RESPONSE_MODE == SimulationMode.NO_REACTION:
-        #     if self.is_symptomatic() and not self.isolating:
-        #         self.self_isolate()
-        #     elif self.is_recovered():
-        #         self.stop_isolating()
-                
         
 
     def get_contacted_agents(self, expiry:int):
@@ -357,6 +380,19 @@ class TraceableAgent(BiologicalAgent):
             if time_delta <= expiry:
                 contact_list.add(c)
         return contact_list
+
+
+    def get_infected_contacts(self):
+        count = 0
+        contact_list = self.get_contacted_agents(INCUBATION_SAFE_TIME)
+        for c in contact_list:
+            if c.symptomatic:
+                count += 1
+        return count
+
+    
+    def notify_contacts(self):
+        ...
 
 
     def wait_for_test(self):
