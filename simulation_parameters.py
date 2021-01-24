@@ -5,11 +5,11 @@ class SimulationMode(Enum):
     GEO_NOTIFICATION = 3
 
 # World parameters
-NUM_AGENTS = 20000
+NUM_AGENTS = 200
 AGENT_SLACK = 4
 # Number of cells in the environment
-WORLD_WIDTH = 1000
-WORLD_HEIGHT = 1000
+WORLD_WIDTH = 3000
+WORLD_HEIGHT = 3000
 
 MAXIMUM_TIME = 3000
 

@@ -59,7 +59,7 @@ while (too_wide or too_tall) and BLOCK_SIZE > BLOCK_SIZE_MIN:
     too_tall = BLOCK_SIZE * WORLD_HEIGHT > MAX_RES_VERT
 
 
-TICK_DELAY = 10
+TICK_DELAY = 1
 
 FPS_CLOCK = pygame.time.Clock()
 
@@ -78,9 +78,9 @@ def main():
         clear_screen()
 
     env = Environment(WORLD_WIDTH, WORLD_HEIGHT)
-    for i in range(NUM_AGENTS):
-        print(f'spawning {i}th agent')
-        spawn_agent(env)
+   
+        
+    spawn_agents(env)
 
     # Infect some of the agents
     for _ in range(int(math.ceil(NUM_AGENTS * INITIAL_INFECTED_PERCENT))):
@@ -150,28 +150,35 @@ def draw_view(env):
     pygame.display.update()
 
 
-def spawn_agent(env):
-    while True:
-        x = random.randint(0, WORLD_WIDTH-1)
-        y = random.randint(0, WORLD_HEIGHT-1)
-        focus_x = random.randint(0, WORLD_WIDTH-1)
-        focus_y = random.randint(0, WORLD_HEIGHT-1)
-        home_point = np.array([x, y])
-        work_point = np.array([focus_x, focus_y])
-        # Make sure that no two agents share the same work point or the 
-        # same home point.
-        valid_home = True
-        valid_work = True
-        for p in env.home_points:
-            if np.array_equal(p, home_point):
-                valid_home = False
+def spawn_agents(env):
+    x_list = list(range(WORLD_WIDTH))
+    y_list = list(range(WORLD_HEIGHT))
+    random.shuffle(x_list)
+    random.shuffle(y_list)
+    for n in range(NUM_AGENTS):
+        home_point = np.array([x_list.pop(), y_list.pop()])
+        work_point = np.array([x_list.pop(), y_list.pop()])
+    # while True:
+    #     x = random.randint(0, WORLD_WIDTH-1)
+    #     y = random.randint(0, WORLD_HEIGHT-1)
+    #     focus_x = random.randint(0, WORLD_WIDTH-1)
+    #     focus_y = random.randint(0, WORLD_HEIGHT-1)
+    #     home_point = np.array([x, y])
+    #     work_point = np.array([focus_x, focus_y])
+    #     # Make sure that no two agents share the same work point or the 
+    #     # same home point.
+    #     valid_home = True
+    #     valid_work = True
+    #     for p in env.home_points:
+    #         if np.array_equal(p, home_point):
+    #             valid_home = False
         
-        for p in env.work_points:
-            if np.array_equal(p, work_point):
-                valid_work = False
+    #     for p in env.work_points:
+    #         if np.array_equal(p, work_point):
+    #             valid_work = False
 
-        if valid_home and valid_work:
-            break
+    #     if valid_home and valid_work:
+    #         break
 
     env.home_points.append(home_point)
     env.work_points.append(work_point)
