@@ -1,4 +1,5 @@
 # TODO: More decoupling between this view, and the model
+import argparse
 from environment import Environment
 import math
 import numpy as np
@@ -30,6 +31,13 @@ agent_colors = {
     sir.SYMPTOMATIC: RED,
     sir.RECOVERED: PURPLE
 }
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--headless', action='store_true')
+args = parser.parse_args()
+headless = args.headless
+if(headless):
+    print("Running in headless mode")
 
 # Window properties
 # Maximum window resolution
@@ -63,31 +71,23 @@ if RNG_SEED is not None:
 def main():
     global screen, FPS_CLOCK
 
-    is_dragging = False
-    mousePos = (0, 0)
-    dragStart = (0, 0)
-    dragEnd = (0, 0)
-    mouse_x = 0
-    mouse_y = 0
-
-    vp_curr_x = 0
-    vp_curr_y = 0
-
     pygame.init()
-    pygame.display.set_caption('Agent Simulation')
-    screen = pygame.display.set_mode((WORLD_WIDTH*BLOCK_SIZE, WORLD_HEIGHT*BLOCK_SIZE))
-
-    clear_screen()
+    if not headless:
+        pygame.display.set_caption('Agent Simulation')
+        screen = pygame.display.set_mode((WORLD_WIDTH*BLOCK_SIZE, WORLD_HEIGHT*BLOCK_SIZE))
+        clear_screen()
 
     env = Environment(WORLD_WIDTH, WORLD_HEIGHT)
     for i in range(NUM_AGENTS):
+        print(f'spawning {i}th agent')
         spawn_agent(env)
 
     # Infect some of the agents
     for _ in range(int(math.ceil(NUM_AGENTS * INITIAL_INFECTED_PERCENT))):
         env.infect_agent(env.agents[0])
 
-    pygame.display.update()
+    if not headless:
+        pygame.display.update()
     
     TICK_EVENT = pygame.USEREVENT
     pygame.time.set_timer(TICK_EVENT, TICK_DELAY)
@@ -105,7 +105,8 @@ def main():
                     env.tick()
 
             # Update the display
-            draw_view(env)
+            if not headless:
+                draw_view(env)
 
 
 def draw_square(x, y, color):
@@ -176,38 +177,6 @@ def spawn_agent(env):
     env.work_points.append(work_point)
     # env.add_focused_agent(home_point, work_point)
     env.add_agent(home_point, work_point)
-
-# def zoom_in():
-#     global BLOCK_SIZE, screen
-#     BLOCK_SIZE += 1
-#     # clear_screen()
-
-# def zoom_out():
-#     global BLOCK_SIZE, screen
-#     if BLOCK_SIZE > BLOCK_SIZE_MIN:
-#         BLOCK_SIZE -= 1
-#         # clear_screen()
-
-# def pan_view(dx, dy):
-#     global vp_curr_x, vp_curr_y, vp_max_x, vp_max_y
-#     if vp_curr_x <= vp_max_x and vp_curr_x >= vp_min_x:
-#         vp_curr_x = vp_curr_x - dx
-#         # Constrain new coordinate within bounds
-#         if vp_curr_x > vp_max_x:
-#             vp_curr_x = vp_max_x
-#         if vp_curr_x < vp_min_x:
-#             vp_curr_x = vp_min_x # This will almost always be 0, I think...
-
-#     if vp_curr_y <= vp_max_y and vp_curr_y >= vp_min_y:
-#         vp_curr_y = vp_curr_y - dy
-#         # Constrain new coordinate within bounds
-#         if vp_curr_y > vp_max_y:
-#             vp_curr_y = vp_max_y
-#         if vp_curr_y < vp_min_y:
-#             vp_curr_y = vp_min_y # This will almost always be 0, I think...
-
-#     print(f"Viewport origin: ({vp_curr_x}, {vp_curr_y})")
-
 
 
 if __name__ == '__main__':

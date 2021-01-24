@@ -53,7 +53,7 @@ class Environment:
 
     def add_agent(self, home_point:np.array, work_point:np.array) -> None:
         """
-        Spawn in a BiologicalAgent
+        Spawn in a TraceableAgent
 
         home_point: Coordinate pair of the agent's home point
         work_point: Coordinate pair of the agent's work point

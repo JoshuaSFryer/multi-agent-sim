@@ -5,11 +5,11 @@ class SimulationMode(Enum):
     GEO_NOTIFICATION = 3
 
 # World parameters
-NUM_AGENTS = 20
+NUM_AGENTS = 20000
 AGENT_SLACK = 4
 # Number of cells in the environment
-WORLD_WIDTH = 30
-WORLD_HEIGHT = 30
+WORLD_WIDTH = 1000
+WORLD_HEIGHT = 1000
 
 MAXIMUM_TIME = 3000
 
@@ -17,22 +17,21 @@ MAXIMUM_TIME = 3000
 # Infection parameters
 INITIAL_INFECTED_PERCENT = 0.02
 INFECTION_RADIUS = 2
+INFECTION_PROBABILITY = 0.7
+REINFECTION_POSSIBLE = True
 
+# Durations of each infection stage, in ticks
 INCUBATION_SAFE_TIME = 50
 INCUBATION_CONTAGIOUS_TIME = 50
 SYMPTOMATIC_TIME = 100
-REINFECTION_POSSIBLE = True
 IMMUNITY_DURATION = 100
-
-INFECTION_PROBABILITY = 1
-
-CAUTION_THRESHOLD = 5
-
 
 # Agent behaviour parameters
 RESPONSE_MODE = SimulationMode.CONTACT_TRACING
 # How long the agents wait to "get tested" after becoming symptomatic
 SYMPTOM_TESTING_LAG = 3
-
+# How many symptomatic contacts can be registered before going into
+# cautious isolation
+CAUTION_THRESHOLD = 5
 
 RNG_SEED = 5

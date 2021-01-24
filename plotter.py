@@ -21,6 +21,9 @@ class Plotter():
         plt.xlabel('Time (min)')
         plt.ylabel('Population')
         plt.title('SIR Status of Population Over Time')
+
+        # y_ticks = range(min(y))
+        # plt.yticks()
         # Put the legend outside the graph area
         plt.legend(bbox_to_anchor=(1,1), loc=2)
         plt.tight_layout()
