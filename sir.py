@@ -7,7 +7,9 @@ class SIR_status(Enum):
     INCUBATING_SAFE = 2
     # Infected and asymptomatic, but contagious
     INCUBATING_CONTAGIOUS = 3
-    # Contagious and showing symptoms
-    SYMPTOMATIC = 4
+    # Contagious and showing mild symptoms (only used in mode 4)
+    SYMPTOMATIC_MILD = 5
+    # Contagious and showing severe symptoms
+    SYMPTOMATIC_SEVERE = 6
     # No longer infected, temporarily immune
-    RECOVERED = 5
+    RECOVERED = 7

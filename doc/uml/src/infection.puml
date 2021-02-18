@@ -1,4 +1,4 @@
-@startuml
+@startuml Normal_Infection
 state Infection {
     [*] --> Susceptible
     Susceptible --> Incubating : infect()

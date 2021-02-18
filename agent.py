@@ -231,11 +231,14 @@ class BiologicalAgent(FocusedAgent):
 
 
     def is_contagious(self) -> bool:
-        return self.infection.status in (sir.INCUBATING_CONTAGIOUS, sir.SYMPTOMATIC)
+        return self.infection.status in (sir.INCUBATING_CONTAGIOUS,
+                                        sir.SYMPTOMATIC_MILD, 
+                                        sir.SYMPTOMATIC_SEVERE)
 
     
     def is_symptomatic(self) -> bool:
-        return self.infection.status == sir.SYMPTOMATIC
+        return self.infection.status in (sir.SYMPTOMATIC_MILD, 
+                                        sir.SYMPTOMATIC_SEVERE)
 
     
     def is_recovered(self) -> bool:

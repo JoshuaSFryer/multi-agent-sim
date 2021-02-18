@@ -1,4 +1,4 @@
-@startuml Mode_1_No_Reaction
+@startuml Model_A_No_Reaction
 
 state Agent {
     [*] --> Idle

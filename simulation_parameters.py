@@ -1,8 +1,9 @@
 from enum import Enum
 class SimulationMode(Enum):
     NO_REACTION = 1
-    CONTACT_TRACING = 2
-    GEO_NOTIFICATION = 3
+    SELF_ISOLATION = 2
+    CONTACT_TRACING = 3
+    PREEMPTIVE_ISOLATION = 4
 
 # World parameters
 NUM_AGENTS = 100

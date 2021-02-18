@@ -97,19 +97,24 @@ class Environment:
     def move_object(self, obj:Object, new_x:int, new_y:int) -> None:
         """
         Alter the position of an object in the environment.
-        This method does not check against collisions (though perhaps it should),
-        instead assuming that the calling code is concerned with that.
+        If the new position is occupied, an exception is raised, so caller code
+        should take care of avoiding this.
 
         obj:    The object to move
         new_x:  The destination x coordinate
         new_y:  The destination y coordinate
-        """
 
-        x, y = obj.pos.tolist()
-        self.cells[y][x].remove_object()
-        obj.old_pos = np.array([x, y])
-        obj.pos = np.array([new_x, new_y])
-        self.cells[new_y][new_x].add_object(obj)
+        raises: RuntimeError, if the destination is occupied.
+        """
+        try:
+            x, y = obj.pos.tolist()
+            self.cells[y][x].remove_object()
+            obj.old_pos = np.array([x, y])
+            obj.pos = np.array([new_x, new_y])
+            self.cells[new_y][new_x].add_object(obj)
+            
+        except RuntimeError:
+            print(f'Cannot place object at {x},{y}: cell occupied.')
 
     
     def tick(self) -> None:
@@ -187,6 +192,7 @@ class Environment:
             # Execute the move
             self.move_object(agent, new_x, new_y)
 
+
     def validate_move(self, x:int, y:int) -> bool:
         """
         Check whether a position would be valid to put an object in, using the 
@@ -221,6 +227,7 @@ class Environment:
             agent.recover()
         except ValueError:
             # The agent could not be cured (it wasn't infected).
+            print(f'Could not recover agent {agent.agent_id}')
             return
 
     
@@ -229,6 +236,7 @@ class Environment:
         Return a list of all Agents in the vicinity of a given Agent
         (i.e. within <radius> tiles, counting diagonals as 1).
         """
+
         x, y = agent.pos.tolist()
         # Get bounds of the search area, accounting for edges of the map
         min_x = max(0, x - radius)
@@ -242,6 +250,7 @@ class Environment:
             for j in range(min_y, max_y):
                     cell = self.cells[j][i]
                     if cell.is_occupied():
+                        # Ensure the agent does not count itself
                         if not cell.object is agent:
                             local_agents.append(cell.object)
 

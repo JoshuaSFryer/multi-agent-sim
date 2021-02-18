@@ -1,0 +1,25 @@
+@startuml Mode_4_Preemptive_Isolation
+
+state Agent {
+    [*] -down-> Idle
+    note left of Idle
+        Shift between home
+        and work points
+        every 12 hours
+    end note
+    Idle -down-> AwaitingTest : Become symptomatic
+    Idle -down-> AwaitingTest : num of symptomatic contacts\nexceeds threshold
+    state isolation_fork <<fork>>
+    AwaitingTest : notify_contacts()
+    AwaitingTest -down-> isolation_fork : testing delay expires
+    isolation_fork -down-> SelfIsolating : if isolating due to symptoms
+    isolation_fork -right-> CautiousIsolating : if isolation due to threshold
+    state join_state <<join>>
+    SelfIsolating --> join_state : recover
+    CautiousIsolating --> join_state : Incubation period expires
+    CautiousIsolating --> SelfIsolating : symptoms develop
+    CautiousIsolating : notify_region()
+    join_state --> Idle
+}
+
+@enduml

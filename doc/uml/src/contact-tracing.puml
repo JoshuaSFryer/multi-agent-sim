@@ -1,4 +1,4 @@
-@startuml Mode_3_Contact_Tracing
+@startuml Model_C_Contact_Tracing
 
 state Agent {
     [*] -down-> Idle

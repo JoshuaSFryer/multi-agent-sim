@@ -1,4 +1,4 @@
-@startuml Mode_2_Self_Isolating
+@startuml Model_B_Self_Isolating
 
 state Agent {
     [*] --> Idle
