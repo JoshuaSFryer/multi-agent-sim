@@ -6,6 +6,7 @@ import numpy as np
 import pygame
 from pygame.locals import *
 import random
+import sys
 
 from simulation_parameters import *
 from sir import SIR_status as sir
@@ -79,7 +80,9 @@ def main():
 
     env = Environment(WORLD_WIDTH, WORLD_HEIGHT)
    
-        
+    if not NUM_AGENTS*2 < WORLD_HEIGHT*WORLD_WIDTH:
+        print('Not enough world space to spawn provided number of agents')
+        sys.exit()
     spawn_agents(env)
 
     # Infect some of the agents
@@ -151,39 +154,29 @@ def draw_view(env):
 
 
 def spawn_agents(env):
-    x_list = list(range(WORLD_WIDTH))
-    y_list = list(range(WORLD_HEIGHT))
-    random.shuffle(x_list)
-    random.shuffle(y_list)
+    """
+    Spawn in agents, assigning them home and work points.
+    """
+    coord_list = list()
+
+    # Generate list of all coordinate pairs (i.e. all cells)
+    for x in range(WORLD_WIDTH):
+        for y in range(WORLD_HEIGHT):
+            coord_list.append(np.array([x,y]))
+
+    # Shuffle the list
+    random.shuffle(coord_list)      
+    
+    # For each agent, pop two coordinates off the stack to use as their home
+    # and work points. This avoids coordinate re-use and is much more efficient
+    # than checking which coords have been used over and over.
     for n in range(NUM_AGENTS):
-        home_point = np.array([x_list.pop(), y_list.pop()])
-        work_point = np.array([x_list.pop(), y_list.pop()])
-    # while True:
-    #     x = random.randint(0, WORLD_WIDTH-1)
-    #     y = random.randint(0, WORLD_HEIGHT-1)
-    #     focus_x = random.randint(0, WORLD_WIDTH-1)
-    #     focus_y = random.randint(0, WORLD_HEIGHT-1)
-    #     home_point = np.array([x, y])
-    #     work_point = np.array([focus_x, focus_y])
-    #     # Make sure that no two agents share the same work point or the 
-    #     # same home point.
-    #     valid_home = True
-    #     valid_work = True
-    #     for p in env.home_points:
-    #         if np.array_equal(p, home_point):
-    #             valid_home = False
-        
-    #     for p in env.work_points:
-    #         if np.array_equal(p, work_point):
-    #             valid_work = False
+        home_point = coord_list.pop()
+        work_point = coord_list.pop()
 
-    #     if valid_home and valid_work:
-    #         break
-
-    env.home_points.append(home_point)
-    env.work_points.append(work_point)
-    # env.add_focused_agent(home_point, work_point)
-    env.add_agent(home_point, work_point)
+        env.home_points.append(home_point)
+        env.work_points.append(work_point)
+        env.add_agent(home_point, work_point)
 
 
 if __name__ == '__main__':

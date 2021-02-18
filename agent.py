@@ -78,7 +78,7 @@ class FocusedAgent(Agent):
 
     def get_movement(self) -> np.array:
         """
-        Move, either directly towards the focus point, or erroneously (parallel)
+        Move, either directly towards the focus point, or erroneously (parallel
         or backwards). The chance of erroneous movement is inversely proportional 
         to the agent's distance from the focus point, following a linear decay. 
         Once the agent reaches its focus point, it will be randomly stepping
