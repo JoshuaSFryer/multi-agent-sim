@@ -1,0 +1,15 @@
+@startuml
+state Infection {
+    [*] --> Susceptible
+    Susceptible --> Incubating : infect()
+    Incubating : advance_infection()
+    Incubating --> Contagious : advance_infection()
+    Contagious : advance_infection()
+    Contagious --> Symptomatic : advance_infection()
+    Symptomatic : advance_infection()
+    Symptomatic --> Recovered : advance_infection()
+    Recovered: lose_imminuty()
+    Recovered --> Susceptible : immunity expires
+}
+
+@enduml
