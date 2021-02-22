@@ -90,8 +90,8 @@ def main():
     spawn_agents(env)
 
     # Infect some of the agents
-    for _ in range(int(math.ceil(NUM_AGENTS * INITIAL_INFECTED_PERCENT))):
-        env.infect_agent(env.agents[0])
+    for i in range(int(math.ceil(NUM_AGENTS * INITIAL_INFECTED_PERCENT))):
+        env.infect_agent(env.agents[i])
 
     if not headless:
         pygame.display.update()
