@@ -1,3 +1,4 @@
+import random
 import warnings
 
 from simulation_parameters import *
@@ -57,10 +58,56 @@ class Infection():
             self.tick_threshold = INCUBATION_CONTAGIOUS_TIME
         # Become symptomatic
         elif self.status == sir.INCUBATING_CONTAGIOUS:
-            self.status = sir.SYMPTOMATIC
+            self.status = sir.SYMPTOMATIC_SEVERE
             self.tick_threshold = SYMPTOMATIC_TIME
         # Recover, start counting down the immunity timer
         elif self.status == sir.SYMPTOMATIC:
+            self.status = sir.RECOVERED
+            self.tick_threshold = IMMUNITY_DURATION
+        # After the infection has subsided, the agent has a grace period where
+        # it is immune to infection.
+        # After immunity elapses, the agent has no current infection but is
+        # once again susceptible to infection.
+        elif self.status == sir.RECOVERED:
+            self.status = sir.SUSCEPTIBLE
+            self.tick_threshold = None
+            self.active = False
+
+class TwoStageInfection(Infection):
+    """
+    Infection behaviour for model D.
+    """
+    def __init__(self):
+        super().__init__()
+
+    def progress(self):
+        """
+        Override.
+        """
+        if self.status == sir.SUSCEPTIBLE:
+            return
+        
+        # Become contagious
+        if self.status == sir.INCUBATING_SAFE:
+            self.status = sir.INCUBATING_CONTAGIOUS
+            self.tick_threshold = MODEL_D_CONTAGIOUS_TIME
+        # Become symptomatic
+        elif self.status == sir.INCUBATING_CONTAGIOUS:
+            self.status = sir.SYMPTOMATIC_MILD
+            self.tick_threshold = MILD_SYMPTOM_TIME
+        # Chance to progress from mild to severe, or to recover
+        elif self.status == sir.SYMPTOMATIC_MILD:
+            n = random.random()
+            if n < FALSE_ALARM_PROBABILITY:
+                # Recover
+                self.status = sir.RECOVERED
+                self.tick_threshold = IMMUNITY_DURATION
+            else:
+                # Progress to severe symptoms
+                self.status = sir.SYMPTOMATIC_SEVERE
+                self.tick_threshold = SYMPTOMATIC_TIME
+        # Recover, start counting down the immunity timer
+        elif self.status == sir.SYMPTOMATIC_SEVERE:
             self.status = sir.RECOVERED
             self.tick_threshold = IMMUNITY_DURATION
         # After the infection has subsided, the agent has a grace period where

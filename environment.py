@@ -36,6 +36,8 @@ class Environment:
         self.infected_agents = set()
         self.recovered_agents = set()
 
+        self.id_lookup = dict()
+
         # Current "simulation time", in minutes. One tick advances this clock
         # by one minute. Wraps around at 1440 minutes (i.e. every 24 hours).
         self.current_time = 0
@@ -61,9 +63,22 @@ class Environment:
 
         # Agent spawns at home, default focus is work
         x, y = home_point.tolist()
-        new_agent = TraceableAgent(self, x, y, home_point, work_point, 10)
+
+        if RESPONSE_MODE == SimulationMode.NO_REACTION:
+            new_agent = BiologicalAgent(self, x, y, home_point, work_point, AGENT_SLACK)
+        elif RESPONSE_MODE == SimulationMode.SELF_ISOLATION:
+            new_agent = IsolatingAgent(self, x, y, home_point, work_point, AGENT_SLACK)
+        elif RESPONSE_MODE == SimulationMode.CONTACT_TRACING:
+            new_agent = TraceableAgent(self, x, y, home_point, work_point, AGENT_SLACK)
+        elif RESPONSE_MODE == SimulationMode.PREEMPTIVE_ISOLATION:
+            new_agent = CautiousAgent(self, x, y, home_point, work_point, AGENT_SLACK)
+
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
+
+        if RESPONSE_MODE in (SimulationMode.CONTACT_TRACING, 
+                            SimulationMode.PREEMPTIVE_ISOLATION):
+            self.id_lookup[new_agent.agent_id] = new_agent
 
 
     def add_object(self, obj:Object, x:int, y:int) -> None:
@@ -82,16 +97,19 @@ class Environment:
         obj.pos = np.array([x, y])
 
 
-    def remove_object(self, obj:Object) -> None:
-        """
-        Remove an object from the environment.
+    # def remove_object(self, obj:Object) -> None:
+    #     """
+    #     Remove an object from the environment.
 
-        obj:    The object to remove
-        """
+    #     obj:    The object to remove
+    #     """
 
-        x, y = obj.pos.tolist()
-        self.cells[y][x].remove_object(obj)
-        self.agents.remove(obj)
+    #     x, y = obj.pos.tolist()
+    #     self.cells[y][x].remove_object(obj)
+    #     self.agents.remove(obj)
+    #     if RESPONSE_MODE in (SimulationMode.CONTACT_TRACING,
+    #                          SimulationMode.PREEMPTIVE_ISOLATION):
+    #         self.id_lookup[new_agent.agent_id] = new_agent
 
 
     def move_object(self, obj:Object, new_x:int, new_y:int) -> None:
@@ -160,8 +178,9 @@ class Environment:
         for agent in self.agents:
             # Find all nearby agents and register contact
             nearby_agents = self.localized_search(agent, INFECTION_RADIUS)
-            for n in nearby_agents:
-                agent.register_contact(self.current_time, n)
+            if RESPONSE_MODE in (SimulationMode.CONTACT_TRACING, SimulationMode.PREEMPTIVE_ISOLATION):
+                for n in nearby_agents:
+                    agent.register_contact(self.current_time, n)
 
             if agent.is_infected():
                 # If the agent is contagious, roll to infect nearby agents.
@@ -273,3 +292,5 @@ class Environment:
         path = self.logger.filename
         p = Plotter(path)
 
+    def get_agent_by_uuid(self, id):
+        return self.id_lookup[id]

@@ -2,10 +2,10 @@ import numpy as np
 import random
 import uuid
 
-from contact import Contact
+from contact import *
 from objects import Object
 from direction import Direction
-from infection import Infection
+from infection import Infection, TwoStageInfection
 from simulation_parameters import *
 from sir import SIR_status as sir
 
@@ -186,21 +186,21 @@ class BiologicalAgent(FocusedAgent):
     """
     
     def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
-                    slack:int, diseased=sir.SUSCEPTIBLE):
+                    slack:int):
         """
         x:  Initial x coordiate of the agent
         y:  Initial y coordinate of the agent
         home_point: Coordinate pair representing this agent's home point
         work_point: Coordinate pair representing this agent's work point
         slack:      Integer influencing how far the agent can stray from its
-                    current focus point 
-        diseased:   SIR status for the agent upon creation. Most agents should
-                    be created as susceptible, but this allows for seeding 
-                    an agent as infected. (TODO: Deprecated)
+                    current focus point
         """
 
         super().__init__(parent, x, y, home, work, slack)
-        self.infection = Infection()
+        if RESPONSE_MODE == SimulationMode.PREEMPTIVE_ISOLATION:
+            self.infection = TwoStageInfection()
+        else:
+            self.infection = Infection()
 
 
     def infect(self):
@@ -257,59 +257,31 @@ class TestingReason(Enum):
     CONTACTS = 2
 
 
-class TraceableAgent(BiologicalAgent):
+class IsolatingAgent(BiologicalAgent):
+    """
+    Agent with the capability to self-isolate upon becoming symptomatic.
+    Used for simulation model B.
+    """
+    def __init__(self, parent, x, y, home, work, slack):
+        super().__init__(parent, x, y, home, work, slack)
 
-    def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
-                    slack:int, diseased=sir.SUSCEPTIBLE):
-
-        super().__init__(parent, x, y, home, work, slack, diseased)
-        # Unique ID to track each agent
-        self.agent_id = uuid.uuid4()
-        # List of contacts with other agents
-        self.contacts = list()
-        # True if agent is self-isolating
-        # self.isolating = False
         self.behavior = BehaviorState.IDLE
         self.testing_timer = 0
-        self.caution_timer = 0
-        self.testing_reason = None
-
-
-    def register_contact(self, time, contacted_agent):
-        """
-        Record a contact with another agent at a particular time.
-        """
-        
-        self.contacts.append(Contact(time, 
-                                    self.pos,
-                                    contacted_agent.agent_id,
-                                    contacted_agent.is_symptomatic()
-                                    ))
-
 
     def self_isolate(self):
         self.behavior = BehaviorState.SELF_ISOLATING
         self.focus_point = self.home_point
-    
 
-    def provisional_isolate(self):
-        self.behavior = BehaviorState.CAUTIOUS_ISOLATING
-        self.focus_point = self.home_point
-        self.caution_timer = INCUBATION_SAFE_TIME + INCUBATION_CONTAGIOUS_TIME
-
-    
     def stop_isolating(self):
-        # self.isolating = False
         self.behavior = BehaviorState.IDLE
         # Have the agent sync back up with the day/night cycle
         if self.parent.daytime:
             self.focus_point = self.work_point
-        # else, it's night and so focus should be home_point, which it ought to 
+        # else, it's night and so focus should be home_point, which it ought to
         # be if the agent was isolating, but here's the code just in case
         else:
             self.focus_point = self.home_point
 
-    
     def toggle_focus(self):
         """
         Overrides FocusedAgent.toggle_focus(), disabling normal focus-toggling
@@ -319,55 +291,94 @@ class TraceableAgent(BiologicalAgent):
         if not self.is_isolating():
             super().toggle_focus()
 
-    
+
+    def wait_for_test(self):
+        self.testing_timer = SYMPTOM_TESTING_LAG
+        self.behavior = BehaviorState.AWAITING_TEST
+
+    def is_isolating(self):
+        return self.behavior == BehaviorState.SELF_ISOLATING
+
     def tick(self):
         """
         Overrides BiologicalAgent.tick().
         Agents will now begin self-isolating upon becoming symptomatic.
         """
         # Tick the infection forward (no effect if infection is inactive)
-        super().tick()
+        self.infection.tick()
 
         if self.behavior == BehaviorState.IDLE:
             # Get tested if symptomatic
             if self.is_symptomatic():
                 self.wait_for_test()
-                self.testing_reason = TestingReason.SYMPTOMS
-                self.notify_contacts()
-
-            # Get tested if number of symptomatic contacts exceeds threshold
-            if self.get_infected_contacts() > CAUTION_THRESHOLD:
-                self.wait_for_test()
-                self.testing_reason = TestingReason.CONTACTS
-                self.notify_contacts()
 
         elif self.behavior == BehaviorState.AWAITING_TEST:
             self.testing_timer -= 1
             if self.testing_timer <= 0:
-                # Go into self-isolation if test was prompted by symptoms
-                if self.testing_reason == TestingReason.SYMPTOMS:
-                    self.self_isolate()
-                    self.testing_reason = None
-                
-                # Go into a cautious self-isolation if test was prompted by 
-                # exposure to other agents who were symptomatic
-                elif self.testing_reason == TestingReason.CONTACTS:
-                    self.provisional_isolate()
-                    self.testing_reason = None
+                # Go into self-isolation
+                self.self_isolate()
 
         elif self.behavior == BehaviorState.SELF_ISOLATING:
             # Go back to normal once the infection ends
             if self.is_recovered:
                 self.stop_isolating()
 
-        elif self.behavior == BehaviorState.CAUTIOUS_ISOLATING:
-            # Go into self-isolation if symptoms develop
+
+class TraceableAgent(IsolatingAgent):
+    """
+    Agent with contact-tracing and notification capability.
+    Used for simulation model C.
+    """
+
+    def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
+                    slack:int):
+        super().__init__(parent, x, y, home, work, slack)
+        # Unique ID to track each agent
+        self.agent_id = uuid.uuid4()
+        # List of contacts with other agents
+        self.contacts = list()
+
+
+    def register_contact(self, time, contacted_agent):
+        """
+        Record a contact with another agent at a particular time.
+        """
+        if not contacted_agent.is_symptomatic():
+            symptoms = SymptomLevel.NONE
+        elif contacted_agent.infection.status == sir.SYMPTOMATIC_MILD:
+            symptoms = SymptomLevel.MILD
+        elif contacted_agent.infection.status == sir.SYMPTOMATIC_SEVERE:
+            symptoms = SymptomLevel.SEVERE
+        
+        self.contacts.append(Contact(time, 
+                                    contacted_agent.pos,
+                                    contacted_agent.agent_id,
+                                    symptoms
+                                    ))
+
+
+    def tick(self):
+        """
+        Overrides IsolatingAgent.tick().
+        """
+        # Tick the infection forward (no effect if infection is inactive)
+        self.infection.tick()
+
+        if self.behavior == BehaviorState.IDLE:
+            # Get tested if symptomatic
             if self.is_symptomatic():
+                self.wait_for_test()
+                self.notify_contacts()
+
+        elif self.behavior == BehaviorState.AWAITING_TEST:
+            self.testing_timer -= 1
+            if self.testing_timer <= 0:
+                # Go into self-isolation
                 self.self_isolate()
-            
-            # Go back to normal if the caution period expires
-            self.caution_timer -= 1
-            if self.caution_timer <= 0:
+
+        elif self.behavior == BehaviorState.SELF_ISOLATING:
+            # Go back to normal once the infection ends
+            if self.is_recovered:
                 self.stop_isolating()
         
 
@@ -384,29 +395,128 @@ class TraceableAgent(BiologicalAgent):
                 contact_list.add(c)
         return contact_list
 
-
-    def get_infected_contacts(self):
-        count = 0
-        contact_list = self.get_contacted_agents(INCUBATION_SAFE_TIME)
-        for c in contact_list:
-            if c.symptomatic:
-                count += 1
-        return count
+    def get_recent_contacts(self):
+        return self.get_contacted_agents(INCUBATION_SAFE_TIME 
+                                        + INCUBATION_CONTAGIOUS_TIME)
 
     
     def notify_contacts(self):
-        ...
+        contact_list = self.get_recent_contacts()
+        for c in contact_list:
+            uuid = c.contact_id
+            agent = self.parent.get_agent_by_uuid(uuid)
+            agent.notification_reaction()
 
 
-    def wait_for_test(self):
-        self.testing_timer = SYMPTOM_TESTING_LAG
-        self.behavior = BehaviorState.AWAITING_TEST
-
+    def notification_reaction(self):
+        self.self_isolate()
     
-    def is_isolating(self):
-        return self.behavior in (BehaviorState.SELF_ISOLATING, BehaviorState.CAUTIOUS_ISOLATING)
 
+class CautiousAgent(TraceableAgent):
+    """
+    Agent that will preemptively isolate.
+    Used for simulation model D.
+    """
+    def __init__(self, parent, x, y, home, work, slack):
+        super().__init__(parent, x, y, home, work, slack)
+        self.caution_timer = 0
+
+
+    def tick(self):
+        """
+        Overrides BiologicalAgent.tick().
+        Agents will now begin self-isolating upon becoming symptomatic.
+        """
+        # Tick the infection forward (no effect if infection is inactive)
+        self.infection.tick()
+
+        if self.behavior == BehaviorState.IDLE:
+            # Get tested if symptomatic
+            if self.is_symptomatic():
+                self.wait_for_test()
+                self.notify_contacts()
+
+            # Isolate if number of symptomatic contacts exceeds threshold
+            if self.get_infected_contacts() > CAUTION_THRESHOLD:
+                self.cautious_isolate()
+                self.geonotify()
+
+        elif self.behavior == BehaviorState.AWAITING_TEST:
+            self.testing_timer -= 1
+            if self.testing_timer <= 0:
+                # Go into self-isolation if test was prompted by symptoms
+                self.self_isolate()
+
+        elif self.behavior == BehaviorState.SELF_ISOLATING:
+            # Go back to normal once the infection ends
+            if self.is_recovered:
+                self.stop_isolating()
+
+        elif self.behavior == BehaviorState.CAUTIOUS_ISOLATING:
+            # Go into self-isolation if symptoms develop
+            if self.is_symptomatic():
+                self.self_isolate()
+            else:
+                # Go back to normal if the caution period expires
+                self.caution_timer -= 1
+                if self.caution_timer <= 0:
+                    self.stop_isolating()
         
+
+    def get_infected_contacts(self):
+        """
+        Count all contacts with agents exhibiting mild symptoms, that occurred
+        within the last {incubation period} ticks.
+        """
+        count = 0
+        contact_list = self.get_recent_contacts()
+        for c in contact_list:
+            if c.symptomatic == SymptomLevel.MILD:
+                count += 1
+        return count
+
+    def cautious_isolate(self):
+        self.behavior = BehaviorState.CAUTIOUS_ISOLATING
+        self.focus_point = self.home_point
+        self.caution_timer = INCUBATION_SAFE_TIME + INCUBATION_CONTAGIOUS_TIME
+
+
+    def geonotify(self):
+        recent_contacts = self.get_recent_contacts()
+        sum_x = 0
+        sum_y = 0
+        n = len(recent_contacts)
+        for c in recent_contacts:
+            x, y = c.location.tolist()
+            sum_x += x
+            sum_y += y
+        avg_x = sum_x / n
+        avg_y = sum_y / n
+        avg_point = np.array([avg_x, avg_y])
+        for c in recent_contacts:
+            agent = self.parent.get_agent_by_uuid(c.contact_id)
+            agent.geonotification_reaction(avg_point)
+
+
+    def geonotification_reaction(self, point:np.array):
+        if self.check_for_local_contact(point):
+            self.self_isolate
+
+
+    def check_for_local_contact(self, notified_point:np.array):
+        """
+        Check to see if this agent has recently encountered contacts near 
+        a given point.
+        """
+        recent_contacts = self.get_recent_contacts()
+        for c in recent_contacts:
+            vector = notified_point - c.location
+            if self.get_distance(vector) <= GEOLOCATION_DISTANCE:
+                return True
+        return False
+        
+
+
 class Rotation:
     """
     Transformation matrices; multiply a vector by one of these matrices to
