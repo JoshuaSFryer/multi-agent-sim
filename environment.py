@@ -32,9 +32,10 @@ class Environment:
         # agents
         self.logger = Logger()
         self.logger.create_log_file()
-        self.susceptible_agents = set()
-        self.infected_agents = set()
-        self.recovered_agents = set()
+
+        self.susceptible_agents = list()
+        self.infected_agents = list()
+        self.recovered_agents = list()
 
         self.id_lookup = dict()
 
@@ -75,6 +76,8 @@ class Environment:
 
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
+
+        self.susceptible_agents.append(new_agent)
 
         if RESPONSE_MODE in (SimulationMode.CONTACT_TRACING, 
                             SimulationMode.PREEMPTIVE_ISOLATION):
@@ -142,23 +145,10 @@ class Environment:
         """
 
         # Log current state
-        # HACK: Iterating over all agents is awful but right now we care about
-        #       results and not how efficiently we get them. At some point when
-        #       there is no looming deadline, should refactor to perhaps sets
-        #       tracking which agents are in which category, updated only when
-        #       they change status (e.g. get a return from progress_infection)
-        susceptible_count = 0
-        infected_count = 0
-        recovered_count = 0
-        for agent in self.agents:
-            if agent.is_susceptible():
-                susceptible_count += 1
-            elif agent.is_infected() and not agent.is_recovered():
-                infected_count += 1
-            elif agent.is_recovered():
-                recovered_count += 1
-            else:
-                raise ValueError("Agent has an invalid status")
+        susceptible_count = len(self.susceptible_agents)
+        infected_count = len(self.infected_agents)
+        recovered_count = len(self.recovered_agents)
+        
         self.logger.log_line(LogEntry(self.current_time, susceptible_count,
                                 infected_count, recovered_count))
            
@@ -232,22 +222,37 @@ class Environment:
         return True
     
 
-    def infect_agent(self, agent:BiologicalAgent):
+    def infect_agent(self, agent:TraceableAgent):
         try:
             agent.infect()
-        except ValueError:
+        except ValueError as e:
             # The agent could not be infected (already infected, or immune).
-            print(f'Could not infect agent {agent.agent_id}')
+            # print(f'Could not infect agent {agent.agent_id}')
+            print('Could not infect agent')
+            print(e)
             return
 
+    def register_susceptible(self, agent):
+        self.recovered_agents.remove(agent)
+        self.susceptible_agents.append(agent)
 
-    def recover_agent(self, agent:BiologicalAgent):
-        try:
-            agent.recover()
-        except ValueError:
-            # The agent could not be cured (it wasn't infected).
-            print(f'Could not recover agent {agent.agent_id}')
-            return
+    def register_infected(self, agent):
+        self.susceptible_agents.remove(agent)
+        self.infected_agents.append(agent)
+
+    def register_recovered(self, agent):
+        self.infected_agents.remove(agent)
+        self.recovered_agents.append(agent)
+
+    # def recover_agent(self, agent:BiologicalAgent):
+    #     try:
+    #         agent.recover()
+    #         self.infected_agents.remove(agent)
+    #         self.recovered_agents.add(agent)
+    #     except ValueError:
+    #         # The agent could not be cured (it wasn't infected).
+    #         print(f'Could not recover agent {agent.agent_id}')
+    #         return
 
     
     def localized_search(self, agent:Agent, radius:int):

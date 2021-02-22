@@ -198,9 +198,9 @@ class BiologicalAgent(FocusedAgent):
 
         super().__init__(parent, x, y, home, work, slack)
         if RESPONSE_MODE == SimulationMode.PREEMPTIVE_ISOLATION:
-            self.infection = TwoStageInfection()
+            self.infection = TwoStageInfection(self)
         else:
-            self.infection = Infection()
+            self.infection = Infection(self)
 
 
     def infect(self):
@@ -380,6 +380,16 @@ class TraceableAgent(IsolatingAgent):
             # Go back to normal once the infection ends
             if self.is_recovered:
                 self.stop_isolating()
+
+        # Tidy up contact list to keep only those encountered within the last
+        # {incubation period} ticks
+        # expiry = INCUBATION_SAFE_TIME + INCUBATION_CONTAGIOUS_TIME
+        # for c in self.contacts:
+        #     time_delta = self.parent.current_time - c.time
+        #     if time_delta >= expiry:
+        #         self.contacts.remove(c)
+        #     else:
+        #         return
         
 
     def get_contacted_agents(self, expiry:int):
@@ -388,20 +398,25 @@ class TraceableAgent(IsolatingAgent):
         in the past {expiry} ticks.
         """
 
-        contact_list = set()
+        contact_list = list()
         for c in self.contacts:
             time_delta = self.parent.current_time - c.time
             if time_delta <= expiry:
-                contact_list.add(c)
+                contact_list.append(c)
         return contact_list
 
+
     def get_recent_contacts(self):
-        return self.get_contacted_agents(INCUBATION_SAFE_TIME 
-                                        + INCUBATION_CONTAGIOUS_TIME)
+        recent_contacts = self.get_contacted_agents(INCUBATION_SAFE_TIME 
+                                                    + INCUBATION_CONTAGIOUS_TIME)
+        if CONTACT_CULLING:
+            self.contacts = recent_contacts
+        return recent_contacts
 
     
     def notify_contacts(self):
         contact_list = self.get_recent_contacts()
+        # contact_list = self.contacts
         for c in contact_list:
             uuid = c.contact_id
             agent = self.parent.get_agent_by_uuid(uuid)
@@ -483,6 +498,7 @@ class CautiousAgent(TraceableAgent):
 
     def geonotify(self):
         recent_contacts = self.get_recent_contacts()
+        # recent_contacts = self.contacts
         sum_x = 0
         sum_y = 0
         n = len(recent_contacts)
@@ -509,6 +525,7 @@ class CautiousAgent(TraceableAgent):
         a given point.
         """
         recent_contacts = self.get_recent_contacts()
+        # recent_contacts = self.contacts
         for c in recent_contacts:
             vector = notified_point - c.location
             if self.get_distance(vector) <= GEOLOCATION_DISTANCE:

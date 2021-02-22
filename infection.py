@@ -6,11 +6,12 @@ from sir import SIR_status as sir
 
 class Infection():
 
-    def __init__(self):
+    def __init__(self, parent):
         self.status = sir.SUSCEPTIBLE
         self.tick_threshold = None
         self.ticks = None
         self.active = False
+        self.parent = parent
 
     
     def activate(self):
@@ -23,6 +24,7 @@ class Infection():
         self.tick_threshold = INCUBATION_SAFE_TIME
         self.ticks = 0
         self.active = True
+        self.parent.parent.register_infected(self.parent)
     
     
     def tick(self):
@@ -61,9 +63,11 @@ class Infection():
             self.status = sir.SYMPTOMATIC_SEVERE
             self.tick_threshold = SYMPTOMATIC_TIME
         # Recover, start counting down the immunity timer
-        elif self.status == sir.SYMPTOMATIC:
+        elif self.status == sir.SYMPTOMATIC_SEVERE:
             self.status = sir.RECOVERED
             self.tick_threshold = IMMUNITY_DURATION
+            self.parent.parent.register_recovered(self.parent)
+
         # After the infection has subsided, the agent has a grace period where
         # it is immune to infection.
         # After immunity elapses, the agent has no current infection but is
@@ -72,13 +76,15 @@ class Infection():
             self.status = sir.SUSCEPTIBLE
             self.tick_threshold = None
             self.active = False
+            self.parent.parent.register_susceptible(self.parent)
+
 
 class TwoStageInfection(Infection):
     """
     Infection behaviour for model D.
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
 
     def progress(self):
         """
@@ -102,6 +108,8 @@ class TwoStageInfection(Infection):
                 # Recover
                 self.status = sir.RECOVERED
                 self.tick_threshold = IMMUNITY_DURATION
+                self.parent.parent.register_recovered(self.parent)
+
             else:
                 # Progress to severe symptoms
                 self.status = sir.SYMPTOMATIC_SEVERE
@@ -110,6 +118,7 @@ class TwoStageInfection(Infection):
         elif self.status == sir.SYMPTOMATIC_SEVERE:
             self.status = sir.RECOVERED
             self.tick_threshold = IMMUNITY_DURATION
+            self.parent.parent.register_recovered(self.parent)
         # After the infection has subsided, the agent has a grace period where
         # it is immune to infection.
         # After immunity elapses, the agent has no current infection but is
@@ -118,3 +127,4 @@ class TwoStageInfection(Infection):
             self.status = sir.SUSCEPTIBLE
             self.tick_threshold = None
             self.active = False
+            self.parent.parent.register_susceptible(self.parent)
