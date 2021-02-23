@@ -20,7 +20,8 @@ class Logger:
                                 'curr_cautious',
                                 'total_cautious',
                                 'num_tracing_notified',
-                                'num_geonotified'
+                                'num_geonotified',
+                                'unnecessary_isolations'
                                 ))
             f.write(string + '\n')
             print(string.replace(',', '\t'))
@@ -45,7 +46,7 @@ class Logger:
 
 class LogEntry:
     def __init__(self, time, s, i, r, rate, trace, curr_isolating, total_isolating,
-                    curr_cautious, total_cautious, geo):
+                    curr_cautious, total_cautious, geo, unnecessary):
         self.time = time
         self.susceptible = s
         self.infected = i
@@ -57,6 +58,7 @@ class LogEntry:
         self.curr_cautious = curr_cautious
         self.total_cautious = total_cautious
         self.total_geonotified = geo
+        self.unnecessary_isolations = unnecessary
 
     def __str__(self):
         return (f'Time: {self.time}, S: {self.susceptible}, I: {self.infected}, '

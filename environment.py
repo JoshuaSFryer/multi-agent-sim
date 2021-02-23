@@ -37,12 +37,22 @@ class Environment:
         self.infected_agents = list()
         self.recovered_agents = list()
 
+        # Number of direct contact-tracing notifications sent
         self.num_notified_through_tracing = 0
+        # Number of times any agent has gone into cautious isolation
         self.num_cautious_isolated = 0
+        # Number of times any agent has gone into self-isolation
         self.num_self_isolated = 0
+        # List of currently self-isolating agents
         self.curr_self_isolating = list()
+        # List of currently cautiously-isolating agents
         self.curr_cautious_isolating = list()
+        # Number of times any agent has received a geonotification and had
+        # a recent contact in the vicinity 
         self.num_geonotified = 0
+        # Number of times any agent has gone into cautious isolation, but
+        # ended up not developing any symptoms (mild or severe)
+        self.unnecessary_isolations = 0
 
         self.id_lookup = dict()
 
@@ -153,7 +163,8 @@ class Environment:
                                         self.num_self_isolated,
                                         len(self.curr_cautious_isolating),
                                         self.num_cautious_isolated,
-                                        self.num_geonotified
+                                        self.num_geonotified,
+                                        0
                                         ))
            
         # Advance clock by one minute

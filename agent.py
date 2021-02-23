@@ -464,6 +464,7 @@ class CautiousAgent(TraceableAgent):
                 self.caution_timer -= 1
                 if self.caution_timer <= 0:
                     self.stop_isolating()
+                    self.parent.unnecessary_isolations += 1
         
 
     def get_infected_contacts(self):
