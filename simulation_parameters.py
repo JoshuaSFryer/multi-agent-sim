@@ -6,13 +6,31 @@ class SimulationMode(Enum):
     PREEMPTIVE_ISOLATION = 4
 
 # World parameters
-NUM_AGENTS = 1000
+NUM_AGENTS = 100
 AGENT_SLACK = 4
 # Number of cells in the environment
 WORLD_WIDTH = 300
 WORLD_HEIGHT = 300
 
 MAXIMUM_TIME = 3000
+
+
+# 'safe' numbers:
+# Initial percent: 0.02
+# INFECTION_RADIUS = 1
+# INFECTION_PROBABILITY: 0.25
+# FALSE_ALARM_PROBABILITY = 0.75
+
+# 'medium'
+# INFECTION_RADIUS = 2
+# INFECTION_PROBABILITY = 0.5
+# FALSE_ALARM_PROBABILITY = 0.5
+
+# 'harsh'
+# INFECTION_RADIUS = 3
+# INFECTION_PROBABILITY = 0.75
+# FALSE_ALARM_PROBABILITY = 0.25
+
 
 
 # Infection parameters
@@ -34,7 +52,7 @@ SYMPTOMATIC_TIME = 100
 IMMUNITY_DURATION = 100
 
 # Agent behaviour parameters
-RESPONSE_MODE = SimulationMode.PREEMPTIVE_ISOLATION
+RESPONSE_MODE = SimulationMode.NO_REACTION
 # How long the agents wait to "get tested" after becoming symptomatic
 SYMPTOM_TESTING_LAG = 3
 # How many symptomatic contacts can be registered before going into

@@ -100,21 +100,6 @@ class Environment:
         obj.pos = np.array([x, y])
 
 
-    # def remove_object(self, obj:Object) -> None:
-    #     """
-    #     Remove an object from the environment.
-
-    #     obj:    The object to remove
-    #     """
-
-    #     x, y = obj.pos.tolist()
-    #     self.cells[y][x].remove_object(obj)
-    #     self.agents.remove(obj)
-    #     if RESPONSE_MODE in (SimulationMode.CONTACT_TRACING,
-    #                          SimulationMode.PREEMPTIVE_ISOLATION):
-    #         self.id_lookup[new_agent.agent_id] = new_agent
-
-
     def move_object(self, obj:Object, new_x:int, new_y:int) -> None:
         """
         Alter the position of an object in the environment.
@@ -244,16 +229,6 @@ class Environment:
         self.infected_agents.remove(agent)
         self.recovered_agents.append(agent)
 
-    # def recover_agent(self, agent:BiologicalAgent):
-    #     try:
-    #         agent.recover()
-    #         self.infected_agents.remove(agent)
-    #         self.recovered_agents.add(agent)
-    #     except ValueError:
-    #         # The agent could not be cured (it wasn't infected).
-    #         print(f'Could not recover agent {agent.agent_id}')
-    #         return
-
     
     def localized_search(self, agent:Agent, radius:int):
         """
@@ -279,17 +254,6 @@ class Environment:
                             local_agents.append(cell.object)
 
         return local_agents
-
-    
-    def num_infected(self):
-        """
-        HACK: return number of infected agents
-        """
-        count = 0
-        for a in self.agents:
-            if a.is_infected():
-                count += 1
-        return count
 
     
     def end_simulation(self):

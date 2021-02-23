@@ -252,11 +252,6 @@ class BehaviorState(Enum):
     CAUTIOUS_ISOLATING = 4
 
 
-class TestingReason(Enum):
-    SYMPTOMS = 1
-    CONTACTS = 2
-
-
 class IsolatingAgent(BiologicalAgent):
     """
     Agent with the capability to self-isolate upon becoming symptomatic.
@@ -380,16 +375,6 @@ class TraceableAgent(IsolatingAgent):
             # Go back to normal once the infection ends
             if self.is_recovered:
                 self.stop_isolating()
-
-        # Tidy up contact list to keep only those encountered within the last
-        # {incubation period} ticks
-        # expiry = INCUBATION_SAFE_TIME + INCUBATION_CONTAGIOUS_TIME
-        # for c in self.contacts:
-        #     time_delta = self.parent.current_time - c.time
-        #     if time_delta >= expiry:
-        #         self.contacts.remove(c)
-        #     else:
-        #         return
         
 
     def get_contacted_agents(self, expiry:int):
@@ -416,7 +401,6 @@ class TraceableAgent(IsolatingAgent):
     
     def notify_contacts(self):
         contact_list = self.get_recent_contacts()
-        # contact_list = self.contacts
         for c in contact_list:
             uuid = c.contact_id
             agent = self.parent.get_agent_by_uuid(uuid)
@@ -494,11 +478,11 @@ class CautiousAgent(TraceableAgent):
         self.behavior = BehaviorState.CAUTIOUS_ISOLATING
         self.focus_point = self.home_point
         self.caution_timer = INCUBATION_SAFE_TIME + INCUBATION_CONTAGIOUS_TIME
+        # TODO: stop agent from following day/night cycle
 
 
     def geonotify(self):
         recent_contacts = self.get_recent_contacts()
-        # recent_contacts = self.contacts
         sum_x = 0
         sum_y = 0
         n = len(recent_contacts)
@@ -525,7 +509,6 @@ class CautiousAgent(TraceableAgent):
         a given point.
         """
         recent_contacts = self.get_recent_contacts()
-        # recent_contacts = self.contacts
         for c in recent_contacts:
             vector = notified_point - c.location
             if self.get_distance(vector) <= GEOLOCATION_DISTANCE:
