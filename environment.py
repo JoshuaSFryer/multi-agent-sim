@@ -141,7 +141,7 @@ class Environment:
         infected_count = len(self.infected_agents)
         recovered_count = len(self.recovered_agents)
 
-        infection_rate = infected_count / NUM_AGENTS
+        infection_rate = round(infected_count / NUM_AGENTS, 2)
         
         self.logger.log_line(LogEntry(  self.current_time,
                                         susceptible_count,

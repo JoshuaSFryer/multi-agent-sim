@@ -308,20 +308,17 @@ class IsolatingAgent(BiologicalAgent):
         if self.behavior == BehaviorState.IDLE:
             # Get tested if symptomatic
             if self.is_symptomatic():
-                self.behavior = BehaviorState.AWAITING_TEST
                 self.wait_for_test()
 
         elif self.behavior == BehaviorState.AWAITING_TEST:
             self.testing_timer -= 1
             if self.testing_timer <= 0:
                 # Go into self-isolation
-                self.behavior = BehaviorState.SELF_ISOLATING
                 self.self_isolate()
 
         elif self.behavior == BehaviorState.SELF_ISOLATING:
             # Go back to normal once the infection ends
             if self.is_recovered():
-                self.behavior = BehaviorState.IDLE
                 self.stop_isolating()
 
 
