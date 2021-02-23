@@ -8,8 +8,8 @@ class Plotter():
         os.makedirs('plot', exist_ok=True)
 
         # Load in the data
-        df = pd.read_csv(csv_path ,names=['time','susceptible','infected','recovered'])
-        x = df['time']
+        df = pd.read_csv(csv_path)
+        x = df['time_ticks']
         y = [df['infected'], df['recovered'], df['susceptible']]
 
         # Use Seaborn for prettier plots than vanilla matplotlib
@@ -22,8 +22,6 @@ class Plotter():
         plt.ylabel('Population')
         plt.title('SIR Status of Population Over Time')
 
-        # y_ticks = range(min(y))
-        # plt.yticks()
         # Put the legend outside the graph area
         plt.legend(bbox_to_anchor=(1,1), loc=2)
         plt.tight_layout()
