@@ -37,6 +37,13 @@ class Environment:
         self.infected_agents = list()
         self.recovered_agents = list()
 
+        self.num_notified_through_tracing = 0
+        self.num_cautious_isolated = 0
+        self.num_self_isolated = 0
+        self.curr_self_isolating = list()
+        self.curr_cautious_isolating = list()
+        self.num_geonotified = 0
+
         self.id_lookup = dict()
 
         # Current "simulation time", in minutes. One tick advances this clock
@@ -133,9 +140,21 @@ class Environment:
         susceptible_count = len(self.susceptible_agents)
         infected_count = len(self.infected_agents)
         recovered_count = len(self.recovered_agents)
+
+        infection_rate = infected_count / NUM_AGENTS
         
-        self.logger.log_line(LogEntry(self.current_time, susceptible_count,
-                                infected_count, recovered_count))
+        self.logger.log_line(LogEntry(  self.current_time,
+                                        susceptible_count,
+                                        infected_count,
+                                        recovered_count,
+                                        infection_rate,
+                                        self.num_notified_through_tracing,
+                                        len(self.curr_self_isolating),
+                                        self.num_self_isolated,
+                                        len(self.curr_cautious_isolating),
+                                        self.num_cautious_isolated,
+                                        self.num_geonotified
+                                        ))
            
         # Advance clock by one minute
         self.current_time += 1

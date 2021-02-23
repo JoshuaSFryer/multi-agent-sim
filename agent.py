@@ -266,8 +266,11 @@ class IsolatingAgent(BiologicalAgent):
     def self_isolate(self):
         self.behavior = BehaviorState.SELF_ISOLATING
         self.focus_point = self.home_point
+        self.parent.curr_self_isolating.append(self)
+        self.parent.num_self_isolated += 1
 
     def stop_isolating(self):
+        self.parent.curr_self_isolating.remove(self)
         self.behavior = BehaviorState.IDLE
         # Have the agent sync back up with the day/night cycle
         if self.parent.daytime:
@@ -409,6 +412,7 @@ class TraceableAgent(IsolatingAgent):
 
     def notification_reaction(self):
         self.self_isolate()
+        self.parent.num_notified_through_tracing += 1
     
 
 class CautiousAgent(TraceableAgent):
@@ -478,6 +482,24 @@ class CautiousAgent(TraceableAgent):
         self.behavior = BehaviorState.CAUTIOUS_ISOLATING
         self.focus_point = self.home_point
         self.caution_timer = INCUBATION_SAFE_TIME + INCUBATION_CONTAGIOUS_TIME
+        self.parent.num_cautious_isolated += 1
+        self.parent.curr_cautious_isolating.append(self)
+    
+    def stop_isolating(self):
+        if self.behavior == BehaviorState.CAUTIOUS_ISOLATING:
+            self.parent.curr_cautious_isolating.remove(self)
+        elif self.behavior == BehaviorState.SELF_ISOLATING:
+            self.parent.curr_self_isolating.remove(self)
+
+        self.behavior = BehaviorState.IDLE
+        # Have the agent sync back up with the day/night cycle
+        if self.parent.daytime:
+            self.focus_point = self.work_point
+        # else, it's night and so focus should be home_point, which it ought to
+        # be if the agent was isolating, but here's the code just in case
+        else:
+            self.focus_point = self.home_point
+
     
     def is_isolating(self):
         """
@@ -488,6 +510,7 @@ class CautiousAgent(TraceableAgent):
 
 
     def geonotify(self):
+        
         recent_contacts = self.get_recent_contacts()
         sum_x = 0
         sum_y = 0
@@ -507,6 +530,8 @@ class CautiousAgent(TraceableAgent):
     def geonotification_reaction(self, point:np.array):
         if self.check_for_local_contact(point):
             self.self_isolate
+            self.parent.num_geonotified += 1
+        
 
 
     def check_for_local_contact(self, notified_point:np.array):
