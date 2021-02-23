@@ -478,7 +478,13 @@ class CautiousAgent(TraceableAgent):
         self.behavior = BehaviorState.CAUTIOUS_ISOLATING
         self.focus_point = self.home_point
         self.caution_timer = INCUBATION_SAFE_TIME + INCUBATION_CONTAGIOUS_TIME
-        # TODO: stop agent from following day/night cycle
+    
+    def is_isolating(self):
+        """
+        Override IsolatingAgent.is_isolating() to include cautious isolating
+        """
+        return self.behavior in (BehaviorState.SELF_ISOLATING,
+                                BehaviorState.CAUTIOUS_ISOLATING)
 
 
     def geonotify(self):
