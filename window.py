@@ -1,6 +1,7 @@
 # TODO: More decoupling between this view, and the model
 import argparse
 from environment import Environment
+import json
 import math
 import numpy as np
 import pygame
@@ -110,6 +111,8 @@ def main():
                 # Tick simulation forward
                 if not env.complete:
                     env.tick()
+                else:
+                    running = False
 
             # Update the display
             if not headless:
