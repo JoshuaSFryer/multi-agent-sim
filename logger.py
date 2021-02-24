@@ -38,7 +38,8 @@ class Logger:
                                 str(entry.curr_cautious),
                                 str(entry.total_cautious),
                                 str(entry.tracing_notifications),
-                                str(entry.total_geonotified)
+                                str(entry.total_geonotified),
+                                str(entry.unnecessary_isolations)
                                 ))
             f.write(string+'\n')
             print(string.replace(',','\t'))
