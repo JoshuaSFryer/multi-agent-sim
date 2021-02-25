@@ -1,17 +1,18 @@
 import random
 import warnings
 
-from simulation_parameters import *
+from simulation_parameters import SimConfig
 from sir import SIR_status as sir
 
 class Infection():
 
-    def __init__(self, parent):
+    def __init__(self, parent, config):
         self.status = sir.SUSCEPTIBLE
         self.tick_threshold = None
         self.ticks = None
         self.active = False
         self.parent = parent
+        self.cfg = config
 
     
     def activate(self):
@@ -21,7 +22,7 @@ class Infection():
         """
 
         self.status = sir.INCUBATING_SAFE
-        self.tick_threshold = INCUBATION_SAFE_TIME
+        self.tick_threshold = self.cfg.INCUBATION_SAFE_TIME
         self.ticks = 0
         self.active = True
         self.parent.parent.register_infected(self.parent)
@@ -57,15 +58,15 @@ class Infection():
         # Become contagious
         if self.status == sir.INCUBATING_SAFE:
             self.status = sir.INCUBATING_CONTAGIOUS
-            self.tick_threshold = INCUBATION_CONTAGIOUS_TIME
+            self.tick_threshold = self.cfg.INCUBATION_CONTAGIOUS_TIME
         # Become symptomatic
         elif self.status == sir.INCUBATING_CONTAGIOUS:
             self.status = sir.SYMPTOMATIC_SEVERE
-            self.tick_threshold = SYMPTOMATIC_TIME
+            self.tick_threshold = self.cfg.SYMPTOMATIC_TIME
         # Recover, start counting down the immunity timer
         elif self.status == sir.SYMPTOMATIC_SEVERE:
             self.status = sir.RECOVERED
-            self.tick_threshold = IMMUNITY_DURATION
+            self.tick_threshold = self.cfg.IMMUNITY_DURATION
             self.parent.parent.register_recovered(self.parent)
 
         # After the infection has subsided, the agent has a grace period where
@@ -83,8 +84,8 @@ class TwoStageInfection(Infection):
     """
     Infection behaviour for model D.
     """
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, parent, config):
+        super().__init__(parent, config)
 
     def progress(self):
         """
@@ -96,28 +97,28 @@ class TwoStageInfection(Infection):
         # Become contagious
         if self.status == sir.INCUBATING_SAFE:
             self.status = sir.INCUBATING_CONTAGIOUS
-            self.tick_threshold = MODEL_D_CONTAGIOUS_TIME
+            self.tick_threshold = self.cfg.MODEL_D_CONTAGIOUS_TIME
         # Become symptomatic
         elif self.status == sir.INCUBATING_CONTAGIOUS:
             self.status = sir.SYMPTOMATIC_MILD
-            self.tick_threshold = MILD_SYMPTOM_TIME
+            self.tick_threshold = self.cfg.MILD_SYMPTOM_TIME
         # Chance to progress from mild to severe, or to recover
         elif self.status == sir.SYMPTOMATIC_MILD:
             n = random.random()
-            if n < FALSE_ALARM_PROBABILITY:
+            if n < self.cfg.FALSE_ALARM_PROBABILITY:
                 # Recover
                 self.status = sir.RECOVERED
-                self.tick_threshold = IMMUNITY_DURATION
+                self.tick_threshold = self.cfg.IMMUNITY_DURATION
                 self.parent.parent.register_recovered(self.parent)
 
             else:
                 # Progress to severe symptoms
                 self.status = sir.SYMPTOMATIC_SEVERE
-                self.tick_threshold = SYMPTOMATIC_TIME
+                self.tick_threshold = self.cfg.SYMPTOMATIC_TIME
         # Recover, start counting down the immunity timer
         elif self.status == sir.SYMPTOMATIC_SEVERE:
             self.status = sir.RECOVERED
-            self.tick_threshold = IMMUNITY_DURATION
+            self.tick_threshold = self.cfg.IMMUNITY_DURATION
             self.parent.parent.register_recovered(self.parent)
         # After the infection has subsided, the agent has a grace period where
         # it is immune to infection.

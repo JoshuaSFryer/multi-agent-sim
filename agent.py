@@ -6,7 +6,7 @@ from contact import *
 from objects import Object
 from direction import Direction
 from infection import Infection, TwoStageInfection
-from simulation_parameters import *
+from simulation_parameters import SimConfig, SimulationMode
 from sir import SIR_status as sir
 
 
@@ -18,8 +18,9 @@ class Agent(Object):
     wish to move.
     """
 
-    def __init__(self, parent, x:int, y:int):
+    def __init__(self, parent, x:int, y:int, config:SimConfig):
         super().__init__(parent, x, y)
+        self.cfg = config
 
     def get_movement(self) -> np.array:
         """
@@ -57,7 +58,8 @@ class FocusedAgent(Agent):
     more likely it is to move towards it).
     """
 
-    def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, slack:int):
+    def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
+                    slack:int, config:SimConfig):
         """
         x:  Initial x coordiate of the agent
         y:  Initial y coordinate of the agent
@@ -67,7 +69,7 @@ class FocusedAgent(Agent):
                     current focus point 
         """
 
-        super().__init__(parent, x, y)
+        super().__init__(parent, x, y, config)
         self.home_point = home
         self.work_point = work
         self.focus_point = self.work_point # Default to work point on creation
@@ -186,7 +188,7 @@ class BiologicalAgent(FocusedAgent):
     """
     
     def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
-                    slack:int):
+                    slack:int, config:SimConfig):
         """
         x:  Initial x coordiate of the agent
         y:  Initial y coordinate of the agent
@@ -196,11 +198,11 @@ class BiologicalAgent(FocusedAgent):
                     current focus point
         """
 
-        super().__init__(parent, x, y, home, work, slack)
-        if RESPONSE_MODE == SimulationMode.PREEMPTIVE_ISOLATION:
-            self.infection = TwoStageInfection(self)
+        super().__init__(parent, x, y, home, work, slack, config)
+        if self.cfg.RESPONSE_MODE == SimulationMode.PREEMPTIVE_ISOLATION:
+            self.infection = TwoStageInfection(self, self.cfg)
         else:
-            self.infection = Infection(self)
+            self.infection = Infection(self, self.cfg)
 
 
     def infect(self):
@@ -257,8 +259,8 @@ class IsolatingAgent(BiologicalAgent):
     Agent with the capability to self-isolate upon becoming symptomatic.
     Used for simulation model B.
     """
-    def __init__(self, parent, x, y, home, work, slack):
-        super().__init__(parent, x, y, home, work, slack)
+    def __init__(self, parent, x, y, home, work, slack, config):
+        super().__init__(parent, x, y, home, work, slack, config)
 
         self.behavior = BehaviorState.IDLE
         self.testing_timer = 0
@@ -291,7 +293,7 @@ class IsolatingAgent(BiologicalAgent):
 
 
     def wait_for_test(self):
-        self.testing_timer = SYMPTOM_TESTING_LAG
+        self.testing_timer = self.cfg.SYMPTOM_TESTING_LAG
         self.behavior = BehaviorState.AWAITING_TEST
 
     def is_isolating(self):
@@ -329,8 +331,8 @@ class TraceableAgent(IsolatingAgent):
     """
 
     def __init__(self, parent, x:int, y:int, home:np.array, work:np.array, 
-                    slack:int):
-        super().__init__(parent, x, y, home, work, slack)
+                    slack:int, config):
+        super().__init__(parent, x, y, home, work, slack, config)
         # Unique ID to track each agent
         self.agent_id = uuid.uuid4()
         # List of contacts with other agents
@@ -395,9 +397,9 @@ class TraceableAgent(IsolatingAgent):
 
 
     def get_recent_contacts(self):
-        recent_contacts = self.get_contacted_agents(INCUBATION_SAFE_TIME 
-                                                    + INCUBATION_CONTAGIOUS_TIME)
-        if CONTACT_CULLING:
+        recent_contacts = self.get_contacted_agents(self.cfg.INCUBATION_SAFE_TIME
+                                                    + self.cfg.INCUBATION_CONTAGIOUS_TIME)
+        if self.cfg.CONTACT_CULLING:
             self.contacts = recent_contacts
         return recent_contacts
 
@@ -420,8 +422,8 @@ class CautiousAgent(TraceableAgent):
     Agent that will preemptively isolate.
     Used for simulation model D.
     """
-    def __init__(self, parent, x, y, home, work, slack):
-        super().__init__(parent, x, y, home, work, slack)
+    def __init__(self, parent, x, y, home, work, slack, config):
+        super().__init__(parent, x, y, home, work, slack, config)
         self.caution_timer = 0
 
 
@@ -440,7 +442,7 @@ class CautiousAgent(TraceableAgent):
                 self.notify_contacts()
 
             # Isolate if number of symptomatic contacts exceeds threshold
-            if self.get_infected_contacts() > CAUTION_THRESHOLD:
+            if self.get_infected_contacts() > self.cfg.CAUTION_THRESHOLD:
                 self.cautious_isolate()
                 self.geonotify()
 
@@ -482,7 +484,8 @@ class CautiousAgent(TraceableAgent):
     def cautious_isolate(self):
         self.behavior = BehaviorState.CAUTIOUS_ISOLATING
         self.focus_point = self.home_point
-        self.caution_timer = INCUBATION_SAFE_TIME + INCUBATION_CONTAGIOUS_TIME
+        self.caution_timer = self.cfg.INCUBATION_SAFE_TIME + \
+            self.cfg.INCUBATION_CONTAGIOUS_TIME
         self.parent.num_cautious_isolated += 1
         self.parent.curr_cautious_isolating.append(self)
     
@@ -543,7 +546,7 @@ class CautiousAgent(TraceableAgent):
         recent_contacts = self.get_recent_contacts()
         for c in recent_contacts:
             vector = notified_point - c.location
-            if self.get_distance(vector) <= GEOLOCATION_DISTANCE:
+            if self.get_distance(vector) <= self.cfg.GEOLOCATION_DISTANCE:
                 return True
         return False
         

@@ -9,14 +9,14 @@ from cell import Cell
 from logger import *
 from objects import *
 from plotter import Plotter
-from simulation_parameters import *
+from simulation_parameters import SimConfig, SimulationMode
 
 MAXIMUM_MOVEMENT_ATTEMPTS = 20
 MINUTES_PER_DAY = 1440
 
 class Environment:
 
-    def __init__(self, width:int, height:int):
+    def __init__(self, width:int, height:int, config:SimConfig, run_identifier:str):
         # Flag for end of simulation
         self.complete = False
 
@@ -28,9 +28,10 @@ class Environment:
         self.home_points = list()
         self.work_points = list()
 
+        self.iden = run_identifier
         # Logger that tracks the counts of susceptible, infected, and recovered
         # agents
-        self.logger = Logger()
+        self.logger = Logger(self.iden)
         self.logger.create_log_file()
 
         self.susceptible_agents = list()
@@ -63,6 +64,8 @@ class Environment:
         # going home.
         self.daytime = True
 
+        self.cfg = config
+
         # Build and populate a grid of Cells
         for y in range(self.canvas_size_y):
             row = list()
@@ -82,21 +85,25 @@ class Environment:
         # Agent spawns at home, default focus is work
         x, y = home_point.tolist()
 
-        if RESPONSE_MODE == SimulationMode.NO_REACTION:
-            new_agent = BiologicalAgent(self, x, y, home_point, work_point, AGENT_SLACK)
-        elif RESPONSE_MODE == SimulationMode.SELF_ISOLATION:
-            new_agent = IsolatingAgent(self, x, y, home_point, work_point, AGENT_SLACK)
-        elif RESPONSE_MODE == SimulationMode.CONTACT_TRACING:
-            new_agent = TraceableAgent(self, x, y, home_point, work_point, AGENT_SLACK)
-        elif RESPONSE_MODE == SimulationMode.PREEMPTIVE_ISOLATION:
-            new_agent = CautiousAgent(self, x, y, home_point, work_point, AGENT_SLACK)
+        if self.cfg.RESPONSE_MODE == SimulationMode.NO_REACTION:
+            new_agent = BiologicalAgent(
+                self, x, y, home_point, work_point, self.cfg.AGENT_SLACK, self.cfg)
+        elif self.cfg.RESPONSE_MODE == SimulationMode.SELF_ISOLATION:
+            new_agent = IsolatingAgent(
+                self, x, y, home_point, work_point, self.cfg.AGENT_SLACK, self.cfg)
+        elif self.cfg.RESPONSE_MODE == SimulationMode.CONTACT_TRACING:
+            new_agent = TraceableAgent(
+                self, x, y, home_point, work_point, self.cfg.AGENT_SLACK, self.cfg)
+        elif self.cfg.RESPONSE_MODE == SimulationMode.PREEMPTIVE_ISOLATION:
+            new_agent = CautiousAgent(
+                self, x, y, home_point, work_point, self.cfg.AGENT_SLACK, self.cfg)
 
         self.add_object(new_agent, x, y)
         self.agents.append(new_agent)
 
         self.susceptible_agents.append(new_agent)
 
-        if RESPONSE_MODE in (SimulationMode.CONTACT_TRACING, 
+        if self.cfg.RESPONSE_MODE in (SimulationMode.CONTACT_TRACING, 
                             SimulationMode.PREEMPTIVE_ISOLATION):
             self.id_lookup[new_agent.agent_id] = new_agent
 
@@ -151,7 +158,7 @@ class Environment:
         infected_count = len(self.infected_agents)
         recovered_count = len(self.recovered_agents)
 
-        infection_rate = round(infected_count / NUM_AGENTS, 2)
+        infection_rate = round(infected_count / self.cfg.NUM_AGENTS, 2)
         
         self.logger.log_line(LogEntry(  self.current_time,
                                         susceptible_count,
@@ -164,12 +171,12 @@ class Environment:
                                         len(self.curr_cautious_isolating),
                                         self.num_cautious_isolated,
                                         self.num_geonotified,
-                                        0
+                                        self.unnecessary_isolations
                                         ))
            
         # Advance clock by one minute
         self.current_time += 1
-        if self.current_time > MAXIMUM_TIME:
+        if self.current_time > self.cfg.MAXIMUM_TIME:
             self.end_simulation()
             return
 
@@ -182,8 +189,8 @@ class Environment:
 
         for agent in self.agents:
             # Find all nearby agents and register contact
-            nearby_agents = self.localized_search(agent, INFECTION_RADIUS)
-            if RESPONSE_MODE in (SimulationMode.CONTACT_TRACING, SimulationMode.PREEMPTIVE_ISOLATION):
+            nearby_agents = self.localized_search(agent, self.cfg.INFECTION_RADIUS)
+            if self.cfg.RESPONSE_MODE in (SimulationMode.CONTACT_TRACING, SimulationMode.PREEMPTIVE_ISOLATION):
                 for n in nearby_agents:
                     agent.register_contact(self.current_time, n)
 
@@ -192,7 +199,7 @@ class Environment:
                 if agent.is_contagious():
                     for n in nearby_agents:
                         roll = random.random()
-                        if roll <= INFECTION_PROBABILITY and n.is_susceptible():
+                        if roll <= self.cfg.INFECTION_PROBABILITY and n.is_susceptible():
                             self.infect_agent(n)
 
             # Update the agent's state
@@ -289,7 +296,7 @@ class Environment:
     def end_simulation(self):
         self.complete = True
         path = self.logger.filename
-        p = Plotter(path)
+        p = Plotter(path, self.iden)
 
     def get_agent_by_uuid(self, id):
         return self.id_lookup[id]
