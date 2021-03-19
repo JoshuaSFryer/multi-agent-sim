@@ -1,0 +1,18 @@
+@startuml Model_C_Contact_Tracing
+
+state Agent {
+    [*] -down-> Idle
+    note left of Idle
+        Shift between home
+        and work points
+        every 12 hours
+    end note
+    Idle --> AwaitingTest : Become symptomatic
+    Idle --> SelfIsolating : Notified of\n contact with\n symptomatic agent
+    AwaitingTest : notify_contacts()
+    AwaitingTest --> SelfIsolating : Testing delay expires
+
+    SelfIsolating --> Idle : Recovery
+}
+
+@enduml

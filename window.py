@@ -1,10 +1,12 @@
 # TODO: More decoupling between this view, and the model
+import argparse
 from environment import Environment
 import math
 import numpy as np
 import pygame
 from pygame.locals import *
 import random
+import sys
 
 from simulation_parameters import *
 from sir import SIR_status as sir
@@ -17,18 +19,30 @@ BLUE = (0,0,255)
 GREEN = (0,255,0)
 ORANGE = (255,128,0)
 YELLOW = (255, 255, 0)
+DARK_YELLOW = (120,120,0)
 PURPLE = (255, 0, 255)
+BLUE_GRAY = (70, 70, 80)
+PINK = (255,128,200)
+
 
 HOME_COLOR = GREEN
 WORK_COLOR = BLUE
 
 agent_colors = {
-    sir.SUSCEPTIBLE: YELLOW,
-    sir.INCUBATING_SAFE: ORANGE,
-    sir.INCUBATING_CONTAGIOUS: RED,
-    sir.SYMPTOMATIC: RED,
+    sir.SUSCEPTIBLE: DARK_YELLOW,
+    sir.INCUBATING_SAFE: YELLOW,
+    sir.INCUBATING_CONTAGIOUS: ORANGE,
+    sir.SYMPTOMATIC_MILD: PINK,
+    sir.SYMPTOMATIC_SEVERE: RED,
     sir.RECOVERED: PURPLE
 }
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--headless', action='store_true')
+args = parser.parse_args()
+headless = args.headless
+if(headless):
+    print("Running in headless mode")
 
 # Window properties
 # Maximum window resolution
@@ -50,40 +64,37 @@ while (too_wide or too_tall) and BLOCK_SIZE > BLOCK_SIZE_MIN:
     too_tall = BLOCK_SIZE * WORLD_HEIGHT > MAX_RES_VERT
 
 
-TICK_DELAY = 500
+TICK_DELAY = 1
 
 FPS_CLOCK = pygame.time.Clock()
 
 screen = None
 
+if RNG_SEED is not None:
+    random.seed(RNG_SEED)
+
 def main():
     global screen, FPS_CLOCK
 
-    is_dragging = False
-    mousePos = (0, 0)
-    dragStart = (0, 0)
-    dragEnd = (0, 0)
-    mouse_x = 0
-    mouse_y = 0
-
-    vp_curr_x = 0
-    vp_curr_y = 0
-
     pygame.init()
-    pygame.display.set_caption('Agent Simulation')
-    screen = pygame.display.set_mode((WORLD_WIDTH*BLOCK_SIZE, WORLD_HEIGHT*BLOCK_SIZE))
-
-    clear_screen()
+    if not headless:
+        pygame.display.set_caption('Agent Simulation')
+        screen = pygame.display.set_mode((WORLD_WIDTH*BLOCK_SIZE, WORLD_HEIGHT*BLOCK_SIZE))
+        clear_screen()
 
     env = Environment(WORLD_WIDTH, WORLD_HEIGHT)
-    for i in range(NUM_AGENTS):
-        spawn_agent(env)
+   
+    if not NUM_AGENTS*2 < WORLD_HEIGHT*WORLD_WIDTH:
+        print('Not enough world space to spawn provided number of agents')
+        sys.exit()
+    spawn_agents(env)
 
     # Infect some of the agents
-    for _ in range(int(math.ceil(NUM_AGENTS * INITIAL_INFECTED_PERCENT))):
-        env.infect_agent(env.agents[0])
+    for i in range(int(math.ceil(NUM_AGENTS * INITIAL_INFECTED_PERCENT))):
+        env.infect_agent(env.agents[i])
 
-    pygame.display.update()
+    if not headless:
+        pygame.display.update()
     
     TICK_EVENT = pygame.USEREVENT
     pygame.time.set_timer(TICK_EVENT, TICK_DELAY)
@@ -97,10 +108,12 @@ def main():
 
             elif event.type == TICK_EVENT:
                 # Tick simulation forward
-                env.tick()
+                if not env.complete:
+                    env.tick()
 
             # Update the display
-            draw_view(env)
+            if not headless:
+                draw_view(env)
 
 
 def draw_square(x, y, color):
@@ -122,6 +135,11 @@ def draw_view(env):
     """
 
     clear_screen()
+
+    # Paint the background a dusky BLUE_GRAY colour at night
+    if not env.daytime:
+        global screen
+        screen.fill(BLUE_GRAY)
     
     for p in env.home_points:
         x, y = p.tolist()
@@ -134,70 +152,35 @@ def draw_view(env):
     # Get list of agents and display them all
     for a in env.agents:
         x, y = a.pos.tolist()
-        color = agent_colors[a.disease_status]
+        color = agent_colors[a.infection.status]
         draw_square(x, y, color)
     pygame.display.update()
 
 
-def spawn_agent(env):
-    while True:
-        x = random.randint(0, WORLD_WIDTH-1)
-        y = random.randint(0, WORLD_HEIGHT-1)
-        focus_x = random.randint(0, WORLD_WIDTH-1)
-        focus_y = random.randint(0, WORLD_HEIGHT-1)
-        home_point = np.array([x, y])
-        work_point = np.array([focus_x, focus_y])
-        # Make sure that no two agents share the same work point or the 
-        # same home point.
-        valid_home = True
-        valid_work = True
-        for p in env.home_points:
-            if np.array_equal(p, home_point):
-                valid_home = False
-        
-        for p in env.work_points:
-            if np.array_equal(p, work_point):
-                valid_work = False
+def spawn_agents(env):
+    """
+    Spawn in agents, assigning them home and work points.
+    """
+    coord_list = list()
 
-        if valid_home and valid_work:
-            break
+    # Generate list of all coordinate pairs (i.e. all cells)
+    for x in range(WORLD_WIDTH):
+        for y in range(WORLD_HEIGHT):
+            coord_list.append(np.array([x,y]))
 
-    env.home_points.append(home_point)
-    env.work_points.append(work_point)
-    # env.add_focused_agent(home_point, work_point)
-    env.add_traceable_agent(home_point, work_point)
+    # Shuffle the list
+    random.shuffle(coord_list)      
+    
+    # For each agent, pop two coordinates off the stack to use as their home
+    # and work points. This avoids coordinate re-use and is much more efficient
+    # than checking which coords have been used over and over.
+    for n in range(NUM_AGENTS):
+        home_point = coord_list.pop()
+        work_point = coord_list.pop()
 
-# def zoom_in():
-#     global BLOCK_SIZE, screen
-#     BLOCK_SIZE += 1
-#     # clear_screen()
-
-# def zoom_out():
-#     global BLOCK_SIZE, screen
-#     if BLOCK_SIZE > BLOCK_SIZE_MIN:
-#         BLOCK_SIZE -= 1
-#         # clear_screen()
-
-# def pan_view(dx, dy):
-#     global vp_curr_x, vp_curr_y, vp_max_x, vp_max_y
-#     if vp_curr_x <= vp_max_x and vp_curr_x >= vp_min_x:
-#         vp_curr_x = vp_curr_x - dx
-#         # Constrain new coordinate within bounds
-#         if vp_curr_x > vp_max_x:
-#             vp_curr_x = vp_max_x
-#         if vp_curr_x < vp_min_x:
-#             vp_curr_x = vp_min_x # This will almost always be 0, I think...
-
-#     if vp_curr_y <= vp_max_y and vp_curr_y >= vp_min_y:
-#         vp_curr_y = vp_curr_y - dy
-#         # Constrain new coordinate within bounds
-#         if vp_curr_y > vp_max_y:
-#             vp_curr_y = vp_max_y
-#         if vp_curr_y < vp_min_y:
-#             vp_curr_y = vp_min_y # This will almost always be 0, I think...
-
-#     print(f"Viewport origin: ({vp_curr_x}, {vp_curr_y})")
-
+        env.home_points.append(home_point)
+        env.work_points.append(work_point)
+        env.add_agent(home_point, work_point)
 
 
 if __name__ == '__main__':

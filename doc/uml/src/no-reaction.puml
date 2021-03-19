@@ -1,0 +1,12 @@
+@startuml Model_A_No_Reaction
+
+state Agent {
+    [*] --> Idle
+    note left of Idle
+        Shift between home
+        and work points
+        every 12 hours
+    end note
+}
+
+@enduml

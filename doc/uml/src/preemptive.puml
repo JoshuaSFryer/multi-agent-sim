@@ -1,0 +1,21 @@
+@startuml Mode_D_Preemptive_Isolation
+state Agent {
+    [*] --> Idle
+    ' note right of Idle
+    '     Shift between home
+    '     and work points
+    '     every 12 hours
+    ' end note
+    Idle --> AwaitingTest : Become symptomatic
+    Idle --> SelfIsolating : Notified of contact with\n symptomatic agent
+    Idle --> CautiousIsolating : Too many mildly symptomatic\n contacts
+    AwaitingTest : notify_contacts()
+    AwaitingTest --> SelfIsolating : Testing delay expires
+    SelfIsolating --> Idle : Recovery
+    CautiousIsolating : geonotify()
+    CautiousIsolating --> Idle : Incubation period expires
+    CautiousIsolating --> SelfIsolating : Become Symptomatic
+    
+}
+
+@enduml

@@ -1,0 +1,19 @@
+@startuml Two_Stage_Infection
+
+state Infection {
+    [*] --> Susceptible
+    Susceptible --> Incubating : infect()
+    Incubating : advance_infection()
+    Incubating --> Contagious : advance_infection()
+    Contagious : advance_infection()
+    Contagious --> SymptomaticMild : advance_infection()
+    SymptomaticMild : advance_infection()
+    SymptomaticMild --> SymptomaticSevere : advance_infection()
+    SymptomaticMild --> Susceptible : false alarm
+    SymptomaticSevere : advance_infection()
+    SymptomaticSevere --> Recovered : advance_infection()
+    Recovered: lose_imminuty()
+    Recovered --> Susceptible : immunity expires
+}
+
+@enduml

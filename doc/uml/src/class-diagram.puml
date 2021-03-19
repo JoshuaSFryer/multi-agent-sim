@@ -1,0 +1,30 @@
+@startuml agent-sim-diagram
+
+
+' Object <|-- Agent
+
+Agent <|-- FocusedAgent
+FocusedAgent <|-- BiologicalAgent
+BiologicalAgent <|-- TraceableAgent
+
+FocusedAgent : Shifts between home and work points
+BiologicalAgent : Contracts and spreads infection
+TraceableAgent : Registers contacts, will self-isolate
+TraceableAgent : under certain circumstances
+
+Infection *-- BiologicalAgent
+
+class Environment {
+    current_time:int
+    daytime:bool
+
+    tick()
+    add_agent()
+}
+
+Window -- Environment : displays
+Environment *-- Agent : *
+Environment o-- Logger
+
+
+@enduml

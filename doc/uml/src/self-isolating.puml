@@ -1,0 +1,16 @@
+@startuml Model_B_Self_Isolating
+
+state Agent {
+    [*] --> Idle
+    note left of Idle
+        Shift between home
+        and work points
+        every 12 hours
+    end note
+    Idle --> AwaitingTest : Become symptomatic
+    AwaitingTest --> SelfIsolating : testing delay expires
+    SelfIsolating --> Idle : recover
+    ' SelfIsolating : notify_contacts()
+}
+
+@enduml
