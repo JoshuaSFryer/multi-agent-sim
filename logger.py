@@ -1,14 +1,16 @@
 from datetime import datetime
 import os
 class Logger:
-    def __init__(self):
+    def __init__(self, log_file_name:str):
         self.filename = None
+        self.ident = log_file_name
         os.makedirs('log', exist_ok=True)
+        self.subfolder = os.path.join('log', self.ident)
+        os.makedirs(self.subfolder)
+        
 
     def create_log_file(self):
-        time = datetime.now()
-        timestamp = time.strftime('%Y-%m-%d_%H:%M:%S')
-        self.filename = os.path.join('log',timestamp + '.csv')
+        self.filename = os.path.join(self.subfolder, self.ident + '.csv')
         with open(self.filename, 'w') as f:
             string = ','.join(( 'time_ticks',
                                 'susceptible',
@@ -38,7 +40,8 @@ class Logger:
                                 str(entry.curr_cautious),
                                 str(entry.total_cautious),
                                 str(entry.tracing_notifications),
-                                str(entry.total_geonotified)
+                                str(entry.total_geonotified),
+                                str(entry.unnecessary_isolations)
                                 ))
             f.write(string+'\n')
             print(string.replace(',','\t'))

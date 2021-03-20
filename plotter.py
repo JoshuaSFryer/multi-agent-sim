@@ -20,6 +20,9 @@ class Plotter():
         elif ident.split('_')[1] == 'sev2':
             sev = 2
 
+        # Use Seaborn for prettier plots than vanilla matplotlib
+        plt.style.use('seaborn')
+        
         # Load in the data
         df = pd.read_csv(csv_path)
         self.plot_SIR(df, legend, sev)
@@ -36,8 +39,6 @@ class Plotter():
         x = df['time_ticks']
         y = [df['infected'], df['recovered'], df['susceptible']]
 
-        # Use Seaborn for prettier plots than vanilla matplotlib
-        plt.style.use('seaborn')
         palette = ['#cc4d3d',  '#3d6ccc', '#55cc3d']
 
         if legend:
