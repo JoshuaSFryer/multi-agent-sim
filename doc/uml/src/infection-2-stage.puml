@@ -1,4 +1,5 @@
 @startuml Two_Stage_Infection
+skinparam DefaultFontName ArialMT
 
 state Infection {
     [*] --> Susceptible
@@ -8,12 +9,12 @@ state Infection {
     Contagious : advance_infection()
     Contagious --> SymptomaticMild : advance_infection()
     SymptomaticMild : advance_infection()
-    SymptomaticMild --> SymptomaticSevere : advance_infection()
+    SymptomaticMild -right-> SymptomaticSevere : advance_infection()
     SymptomaticMild --> Susceptible : false alarm
     SymptomaticSevere : advance_infection()
-    SymptomaticSevere --> Recovered : advance_infection()
+    SymptomaticSevere -up-> Recovered : advance_infection()
     Recovered: lose_imminuty()
-    Recovered --> Susceptible : immunity expires
+    Recovered -left-> Susceptible : immunity expires
 }
 
 @enduml

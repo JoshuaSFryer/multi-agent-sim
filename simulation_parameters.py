@@ -11,12 +11,15 @@ class SimConfig():
     # so 317 : 1000x1000
     # or 7925 : 5000x5000
     # or 31,700 : 10000x10000
-    NUM_AGENTS = 7925
+    NUM_AGENTS = 12000
     # Number of cells in the environment
-    WORLD_WIDTH = 5000
-    WORLD_HEIGHT = 5000
-
-    MAXIMUM_TIME = 300
+    WORLD_WIDTH = 3000
+    WORLD_HEIGHT = 3000
+    #12000, 3500x3500 = ~980 agents/1000tile^2
+    #12000, 5000x5000 = 480
+    #4000x4000 = 750
+    # 1440 ticks per cycle * 4 cycles = 4320
+    MAXIMUM_TIME = 4320
 
     AGENT_SLACK = 4
 

@@ -1,4 +1,7 @@
-@startuml Mode_D_Preemptive_Isolation
+@startuml Model_D_Preemptive_Isolation
+skinparam DefaultFontName ArialMT
+
+left to right direction
 state Agent {
     [*] --> Idle
     ' note right of Idle
@@ -7,7 +10,7 @@ state Agent {
     '     every 12 hours
     ' end note
     Idle --> AwaitingTest : Become symptomatic
-    Idle --> SelfIsolating : Notified of contact with\n symptomatic agent
+    Idle --> SelfIsolating : Notified of contact with symptomatic agent
     Idle --> CautiousIsolating : Too many mildly symptomatic\n contacts
     AwaitingTest : notify_contacts()
     AwaitingTest --> SelfIsolating : Testing delay expires

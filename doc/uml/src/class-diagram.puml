@@ -1,5 +1,6 @@
 @startuml agent-sim-diagram
 
+skinparam DefaultFontName ArialMT
 
 ' Object <|-- Agent
 
