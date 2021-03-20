@@ -1,15 +1,16 @@
 @startuml Normal_Infection
+skinparam DefaultFontName ArialMT
 state Infection {
     [*] --> Susceptible
-    Susceptible --> Incubating : infect()
+    Susceptible -down-> Incubating : infect()
     Incubating : advance_infection()
-    Incubating --> Contagious : advance_infection()
+    Incubating -down-> Contagious : advance_infection()
     Contagious : advance_infection()
     Contagious --> Symptomatic : advance_infection()
     Symptomatic : advance_infection()
-    Symptomatic --> Recovered : advance_infection()
+    Symptomatic -right-> Recovered : advance_infection()
     Recovered: lose_imminuty()
-    Recovered --> Susceptible : immunity expires
+    Recovered -up-> Susceptible : immunity expires
 }
 
 @enduml

@@ -1,15 +1,17 @@
 @startuml Model_B_Self_Isolating
+skinparam DefaultFontName ArialMT
 
+left to right direction
 state Agent {
     [*] --> Idle
-    note left of Idle
-        Shift between home
-        and work points
-        every 12 hours
-    end note
+    ' note left of Idle
+    '     Shift between home
+    '     and work points
+    '     every 12 hours
+    ' end note
     Idle --> AwaitingTest : Become symptomatic
-    AwaitingTest --> SelfIsolating : testing delay expires
-    SelfIsolating --> Idle : recover
+    AwaitingTest --> SelfIsolating : Testing Delay Expires
+    SelfIsolating --> Idle : Recovery
     ' SelfIsolating : notify_contacts()
 }
 

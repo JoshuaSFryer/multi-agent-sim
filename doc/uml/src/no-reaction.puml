@@ -1,4 +1,5 @@
 @startuml Model_A_No_Reaction
+skinparam DefaultFontName ArialMT
 
 state Agent {
     [*] --> Idle
