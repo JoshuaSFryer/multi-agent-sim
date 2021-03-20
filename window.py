@@ -14,17 +14,17 @@ from simulation_parameters import SimConfig
 from sir import SIR_status as sir
 
 # Colour values
-BLACK = (0,0,0)
-WHITE = (255,255,255)
-RED = (255, 0,0)
-BLUE = (0,0,255)
-GREEN = (0,255,0)
-ORANGE = (255,128,0)
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
+ORANGE = (255, 128, 0)
 YELLOW = (255, 255, 0)
-DARK_YELLOW = (120,120,0)
+DARK_YELLOW = (120, 120, 0)
 PURPLE = (255, 0, 255)
 BLUE_GRAY = (70, 70, 80)
-PINK = (255,128,200)
+PINK = (255, 128, 200)
 
 
 HOME_COLOR = GREEN
@@ -103,7 +103,7 @@ def main():
 
     if not headless:
         pygame.display.update()
-    
+
     TICK_EVENT = pygame.USEREVENT
     pygame.time.set_timer(TICK_EVENT, TICK_DELAY)
 
@@ -151,7 +151,7 @@ def draw_view(env):
     if not env.daytime:
         global screen
         screen.fill(BLUE_GRAY)
-    
+
     for p in env.home_points:
         x, y = p.tolist()
         draw_square(x, y, HOME_COLOR)
@@ -180,8 +180,8 @@ def spawn_agents(env):
             coord_list.append(np.array([x,y]))
 
     # Shuffle the list
-    random.shuffle(coord_list)      
-    
+    random.shuffle(coord_list)
+
     # For each agent, pop two coordinates off the stack to use as their home
     # and work points. This avoids coordinate re-use and is much more efficient
     # than checking which coords have been used over and over.
