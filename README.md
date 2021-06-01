@@ -2,6 +2,9 @@
 - Python 3.6 or above
     - Pygame
     - Numpy
+    - Matplotlib
+    - Pandas
+    - Seaborn
 
 # Background
 This is the software used in this conference paper, studying the effectiveness
