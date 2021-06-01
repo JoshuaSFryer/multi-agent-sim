@@ -11,7 +11,7 @@ state Agent {
     ' end note
     Idle --> AwaitingTest : Become symptomatic
     Idle --> SelfIsolating : Notified of contact with symptomatic agent
-    Idle --> CautiousIsolating : Too many mildly symptomatic\n contacts
+    Idle --> CautiousIsolating : Too many mildly symptomatic\n contacts || geonotified
     AwaitingTest : notify_contacts()
     AwaitingTest --> SelfIsolating : Testing delay expires
     SelfIsolating --> Idle : Recovery
