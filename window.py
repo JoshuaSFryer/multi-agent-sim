@@ -70,15 +70,14 @@ while (too_wide or too_tall) and BLOCK_SIZE > BLOCK_SIZE_MIN:
     too_wide = BLOCK_SIZE * cfg.WORLD_WIDTH > MAX_RES_HORIZ
     too_tall = BLOCK_SIZE * cfg.WORLD_HEIGHT > MAX_RES_VERT
 
-
+# Minimum real-time delay between simulation steps, in milliseconds
 TICK_DELAY = 1
-
-FPS_CLOCK = pygame.time.Clock()
 
 screen = None
 
 if cfg.RNG_SEED is not None:
     random.seed(cfg.RNG_SEED)
+
 
 def main():
     global screen, FPS_CLOCK
@@ -90,8 +89,12 @@ def main():
         clear_screen()
 
     run_identifier = f'mode{args.mode}_sev{args.severity}'
+
+    # Build the Evironment / world
     env = Environment(cfg.WORLD_WIDTH, cfg.WORLD_HEIGHT, cfg, run_identifier)
    
+    # Ensure that there are enough spaces in the gridworld to allow for one
+    # work and one home point per agent.
     if not cfg.NUM_AGENTS*2 < cfg.WORLD_HEIGHT*cfg.WORLD_WIDTH:
         print('Not enough world space to spawn provided number of agents')
         sys.exit()
@@ -104,6 +107,7 @@ def main():
     if not headless:
         pygame.display.update()
 
+    # Setup time-advance event to fire every TICK_DELAY milliseconds
     TICK_EVENT = pygame.USEREVENT
     pygame.time.set_timer(TICK_EVENT, TICK_DELAY)
 
@@ -127,22 +131,27 @@ def main():
 
     sys.exit()
 
+
 def draw_square(x, y, color):
+    """
+    Draw a square onscreen.
+    """
     global screen
     rect = pygame.Rect(x*(BLOCK_SIZE), y*(BLOCK_SIZE), BLOCK_SIZE, BLOCK_SIZE)
     pygame.draw.rect(screen, color, rect)
 
 
 def clear_screen():
+    """
+    Fill the screen with white.
+    """
     global screen
     screen.fill(WHITE)
 
 
 def draw_view(env):
     """
-    Update the screen to display the contents of the viewport.
-    NB: Viewport functionality is not yet implemented. This function just 
-    updates the display.
+    Update the screen to display agents, and their home and work points.
     """
 
     clear_screen()
@@ -188,9 +197,8 @@ def spawn_agents(env):
     for n in range(cfg.NUM_AGENTS):
         home_point = coord_list.pop()
         work_point = coord_list.pop()
-
-        env.home_points.append(home_point)
-        env.work_points.append(work_point)
+        # env.home_points.append(home_point)
+        # env.work_points.append(work_point)
         env.add_agent(home_point, work_point)
 
 

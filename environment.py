@@ -20,15 +20,21 @@ class Environment:
         # Flag for end of simulation
         self.complete = False
 
+        # X and Y dimensions of the gridworld
         self.canvas_size_x = width
         self.canvas_size_y = height
 
         self.cells = list() # 2D list, forming a grid
         self.agents = list()
+
+        # Lists of home and work points, used by the GUI to display
         self.home_points = list()
         self.work_points = list()
 
+        # String that identifies the parameters this run was launched with
+        # (e.g. modeA_sev1, for agent mode A and severity 1)
         self.iden = run_identifier
+
         # Logger that tracks the counts of susceptible, infected, and recovered
         # agents
         self.logger = Logger(self.iden)
@@ -58,8 +64,9 @@ class Environment:
         self.id_lookup = dict()
 
         # Current "simulation time", in minutes. One tick advances this clock
-        # by one minute. Wraps around at 1440 minutes (i.e. every 24 hours).
+        # by one minute. Wraps to 0 at 1440 minutes (i.e. every 24 hours).
         self.current_time = 0
+
         # True for 'daytime', people working. False for 'nighttime', people 
         # going home.
         self.daytime = True
@@ -76,7 +83,7 @@ class Environment:
 
     def add_agent(self, home_point:np.array, work_point:np.array) -> None:
         """
-        Spawn in a TraceableAgent
+        Spawn in an agent of the appropriate type for this simulation mode.
 
         home_point: Coordinate pair of the agent's home point
         work_point: Coordinate pair of the agent's work point
@@ -198,7 +205,7 @@ class Environment:
                 # If the agent is contagious, roll to infect nearby agents.
                 if agent.is_contagious():
                     for n in nearby_agents:
-                        roll = random.random()
+                        roll = random.random() # value between 0 and 1
                         if roll <= self.cfg.INFECTION_PROBABILITY and n.is_susceptible():
                             self.infect_agent(n)
 
@@ -208,7 +215,7 @@ class Environment:
 
             # Generate a move repeatedly until a valid one is found
             attempts = 0 # Number of times we've tried to find a legal move
-            while True: # I miss do-while loops
+            while True:
                 attempts += 1
                 if attempts < MAXIMUM_MOVEMENT_ATTEMPTS:
                     move = agent.get_movement()
@@ -236,7 +243,7 @@ class Environment:
         """
 
         if (x >= self.canvas_size_x or y >= self.canvas_size_y 
-            or x < 0 or y < 0):
+            or x < 0 or y < 0): # out of bounds
             return False
         if self.cells[y][x].is_occupied(): # i.e. there is already something in that square
             return False
